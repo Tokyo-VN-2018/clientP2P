@@ -2,6 +2,8 @@
 # Created by https://www.toptal.com/developers/gitignore/api/windows,eclipse,java,maven
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,eclipse,java,maven
 
+sharedFolder
+src/main/java/com/infinity/client/Test.java
 ### Eclipse ###
 .metadata
 bin/
