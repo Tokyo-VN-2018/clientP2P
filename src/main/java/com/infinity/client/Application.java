@@ -85,7 +85,7 @@ public class Application {
 				String serverIP = serverIPInput.getText();
 				String username = usernameInput.getText();
 				
-				Main viewFrame = new Main();
+				Main viewFrame = new Main(username);
 				viewFrame.setLocationRelativeTo(frmFileSharingSystem);
 				viewFrame.setVisible(true);
 			}

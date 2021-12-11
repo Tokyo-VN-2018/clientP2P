@@ -1,14 +1,22 @@
-package com.infinity.client;
+package com.infinity.client.controllers;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
+import java.util.zip.CRC32;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class FileServer {
+import com.infinity.client.models.SharedFileModel;
+
+public class FileServerController {
 	/**
 	 * The map is used for storing shared files.
 	 *
@@ -40,16 +48,16 @@ public class FileServer {
 	/**
 	 * The unique instance of client.
 	 */
-	public static final FileServer INSTANCE = new FileServer();
+	public static final FileServerController INSTANCE = new FileServerController();
 
 	/**
 	 * Logger.
 	 */
-	private static final Logger LOGGER = LogManager.getLogger(FileServer.class);
+	private static final Logger LOGGER = LogManager.getLogger(FileServerController.class);
 	
-	private FileServer() { }
+	private FileServerController() { }
 
-	public static FileServer getInstance() {
+	public static FileServerController getInstance() {
 		return INSTANCE;
 	}
 	
@@ -78,6 +86,27 @@ public class FileServer {
 	 */
 	public boolean contains(String checksum) {
 		return sharedFiles.containsKey(checksum);
+	}
+	
+	/**
+	 * Get current files in Shared Folder
+	 */
+	public static List<SharedFileModel> getFilesInSharedFolder() {
+		List<SharedFileModel> listOfFile = new ArrayList<SharedFileModel>();
+		
+		File dirPath = new File(System.getProperty("user.dir") + File.separator + "sharedFolder");
+		List<File> files = (List<File>) FileUtils.listFiles(dirPath, null, true);
+        for (File file : files) {
+			try {
+				long checksum = FileUtils.checksum(file, new CRC32()).getValue();
+				SharedFileModel tempObj = new SharedFileModel(file.getName(), file.getCanonicalPath(), "", checksum, file.length());
+				listOfFile.add(tempObj);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return listOfFile;
+		
 	}
 	
 	/**

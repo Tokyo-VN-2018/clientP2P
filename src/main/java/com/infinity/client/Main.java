@@ -31,7 +31,7 @@ public class Main extends JFrame {
 	/**
 	 * Create the frame.
 	 */
-	public Main() {
+	public Main(String username) {
 		setTitle("File Sharing System");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 645, 544);
