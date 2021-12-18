@@ -4,19 +4,84 @@ import java.awt.EventQueue;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+
 import java.awt.Font;
 import javax.swing.JTextField;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
+
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.zip.CRC32;
 import java.awt.event.ActionEvent;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import java.awt.Color;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.infinity.client.controllers.ClientController;
+import com.infinity.client.controllers.FileReceiverController;
+import com.infinity.client.controllers.FileServerController;
+import com.infinity.client.models.SharedFileModel;
+import javax.swing.ListSelectionModel;
 
 public class Application {
 
 	private JFrame frmFileSharingSystem;
 	private JTextField serverIPInput;
 	private JTextField usernameInput;
+	private JTextField commandPortInput;
+	private JTextField streamPortInput;
+	private JTextField searchInput;
+	private JTable table;
+	private JTextField sharedFolderInput;
+	
+	/**
+	 * Client used for communicating with server.
+	 */
+	private static final ClientController clientController = ClientController.getInstance();
+	
+	/**
+	 * FileServer used for receiving commands for sending files.
+	 */
+	private static final FileServerController fileServerController = FileServerController.getInstance();
+
+	/**
+	 * FileReceiver used for receiving file stream.
+	 */
+	private static final FileReceiverController fileReceiverController = FileReceiverController.getInstance();
+
+	/**
+	 * A variable stores whether the client is connected to server.
+	 */
+	private boolean isConnected = false;
+	
+	/**
+	 * A variable stores name of shared folder
+	 */
+	private String sharedFolder;
+	
+	/**
+	 * A variable stores results search
+	 */
+	List<SharedFileModel> results;
+
+	/**
+	 * Logger.
+	 */
+	private static final Logger LOGGER = LogManager.getLogger(Application.class);
 
 	/**
 	 * Launch the application.
@@ -31,6 +96,7 @@ public class Application {
 			public void run() {
 				try {
 					Application window = new Application();
+					window.frmFileSharingSystem.setLocationRelativeTo(null);
 					window.frmFileSharingSystem.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -52,83 +118,360 @@ public class Application {
 	private void initialize() {
 		frmFileSharingSystem = new JFrame();
 		frmFileSharingSystem.setTitle("File Sharing System");
-		frmFileSharingSystem.setBounds(100, 100, 625, 419);
+		frmFileSharingSystem.setBounds(100, 100, 970, 681);
 		frmFileSharingSystem.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmFileSharingSystem.getContentPane().setLayout(null);
 		
 		JLabel lblServerIP = new JLabel("Server IP");
 		lblServerIP.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 15));
-		lblServerIP.setBounds(253, 80, 86, 36);
+		lblServerIP.setBounds(29, 54, 86, 36);
 		frmFileSharingSystem.getContentPane().add(lblServerIP);
 		
 		JLabel lblUsername = new JLabel("Username");
 		lblUsername.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 15));
-		lblUsername.setBounds(253, 140, 86, 36);
+		lblUsername.setBounds(379, 54, 86, 36);
 		frmFileSharingSystem.getContentPane().add(lblUsername);
 		
 		serverIPInput = new JTextField();
+		lblServerIP.setLabelFor(serverIPInput);
 		serverIPInput.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 14));
-		serverIPInput.setBounds(355, 85, 194, 24);
+		serverIPInput.setBounds(131, 59, 180, 24);
 		frmFileSharingSystem.getContentPane().add(serverIPInput);
 		serverIPInput.setColumns(10);
 		
 		usernameInput = new JTextField();
+		lblUsername.setLabelFor(usernameInput);
 		usernameInput.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 14));
 		usernameInput.setColumns(10);
-		usernameInput.setBounds(355, 146, 194, 24);
+		usernameInput.setBounds(481, 60, 194, 24);
 		frmFileSharingSystem.getContentPane().add(usernameInput);
 		
 		JButton btnConnect = new JButton("Connect");
 		btnConnect.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 15));
-		btnConnect.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				String serverIP = serverIPInput.getText();
-				String username = usernameInput.getText();
-				
-				Main viewFrame = new Main(username);
-				viewFrame.setLocationRelativeTo(frmFileSharingSystem);
-				viewFrame.setVisible(true);
-			}
-		});
-		btnConnect.setBounds(386, 203, 138, 44);
+		
+		btnConnect.setBounds(783, 100, 138, 37);
 		frmFileSharingSystem.getContentPane().add(btnConnect);
 		
-		JLabel lblNetworkProgramming = new JLabel("Network Programming");
-		lblNetworkProgramming.setHorizontalAlignment(SwingConstants.CENTER);
-		lblNetworkProgramming.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 15));
-		lblNetworkProgramming.setBounds(202, 284, 200, 40);
-		frmFileSharingSystem.getContentPane().add(lblNetworkProgramming);
-		
-		JLabel lblLecturer = new JLabel("Lecturer: Assoc. Prof. Truong Dieu Linh");
-		lblLecturer.setHorizontalAlignment(SwingConstants.CENTER);
-		lblLecturer.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 15));
-		lblLecturer.setBounds(126, 330, 362, 36);
-		frmFileSharingSystem.getContentPane().add(lblLecturer);
-		
-		JLabel lblMembers = new JLabel("Members");
-		lblMembers.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 15));
-		lblMembers.setBounds(40, 70, 86, 36);
-		frmFileSharingSystem.getContentPane().add(lblMembers);
-		
-		JLabel lblNguyenVietHoang = new JLabel("Nguyen Viet Hoang");
-		lblNguyenVietHoang.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 15));
-		lblNguyenVietHoang.setBounds(40, 113, 184, 36);
-		frmFileSharingSystem.getContentPane().add(lblNguyenVietHoang);
-		
-		JLabel lblTaDangHuy = new JLabel("Ta Dang Huy");
-		lblTaDangHuy.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 15));
-		lblTaDangHuy.setBounds(40, 153, 184, 36);
-		frmFileSharingSystem.getContentPane().add(lblTaDangHuy);
-		
-		JLabel lblNguyenTienDung = new JLabel("Nguyen Tien Dung");
-		lblNguyenTienDung.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 15));
-		lblNguyenTienDung.setBounds(40, 199, 184, 36);
-		frmFileSharingSystem.getContentPane().add(lblNguyenTienDung);
-		
-		JLabel lblTeam = new JLabel("Team 5");
+		JLabel lblTeam = new JLabel("TEAM 5");
+		lblTeam.setForeground(new Color(220, 20, 60));
 		lblTeam.setHorizontalAlignment(SwingConstants.CENTER);
 		lblTeam.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 28));
-		lblTeam.setBounds(202, 10, 184, 36);
+		lblTeam.setBounds(396, 10, 184, 36);
 		frmFileSharingSystem.getContentPane().add(lblTeam);
+		
+		JLabel lblPortNo = new JLabel("Port No.");
+		lblPortNo.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 15));
+		lblPortNo.setBounds(29, 100, 86, 36);
+		frmFileSharingSystem.getContentPane().add(lblPortNo);
+		
+		commandPortInput = new JTextField();
+		lblPortNo.setLabelFor(commandPortInput);
+		commandPortInput.setHorizontalAlignment(SwingConstants.CENTER);
+		commandPortInput.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 14));
+		commandPortInput.setColumns(10);
+		commandPortInput.setBounds(131, 105, 76, 24);
+		frmFileSharingSystem.getContentPane().add(commandPortInput);
+		
+		streamPortInput = new JTextField();
+		streamPortInput.setHorizontalAlignment(SwingConstants.CENTER);
+		streamPortInput.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 14));
+		streamPortInput.setColumns(10);
+		streamPortInput.setBounds(235, 105, 76, 24);
+		frmFileSharingSystem.getContentPane().add(streamPortInput);
+		
+		JButton btnSearch = new JButton("Search");
+		
+		btnSearch.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 15));
+		btnSearch.setBounds(327, 225, 138, 37);
+		frmFileSharingSystem.getContentPane().add(btnSearch);
+		
+		JButton btnMyFiles = new JButton("My Files");
+		
+		btnMyFiles.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 15));
+		btnMyFiles.setBounds(783, 154, 138, 37);
+		frmFileSharingSystem.getContentPane().add(btnMyFiles);
+		
+		JButton btnAboutTeam = new JButton("About team");
+		
+		btnAboutTeam.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 15));
+		btnAboutTeam.setBounds(783, 42, 138, 37);
+		frmFileSharingSystem.getContentPane().add(btnAboutTeam);
+		
+		searchInput = new JTextField();
+		searchInput.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 14));
+		searchInput.setColumns(10);
+		searchInput.setBounds(180, 179, 431, 30);
+		frmFileSharingSystem.getContentPane().add(searchInput);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setBounds(89, 287, 610, 310);
+		frmFileSharingSystem.getContentPane().add(scrollPane);
+		
+		table = new JTable();
+		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		table.setFont(new Font("UD Digi Kyokasho NK-B", Font.PLAIN, 14));
+		table.setModel(new DefaultTableModel(
+			new Object[][] {
+				{"test1.txt", "vana", "123456"},
+				{"xinchao.txt", "hanoi", "94357"},
+				{"helloworld", "newyork", "31702"},
+				{null, null, null},
+				{null, null, null},
+				{null, null, null},
+				{null, null, null},
+				{null, null, null},
+				{null, null, null},
+				{null, null, null},
+			},
+			new String[] {
+				"File name", "Sharer", "Size"
+			}
+		) {
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+			boolean[] columnEditables = new boolean[] {
+				false, false, false
+			};
+			public boolean isCellEditable(int row, int column) {
+				return columnEditables[column];
+			}
+		});
+		table.getColumnModel().getColumn(0).setResizable(false);
+		table.getColumnModel().getColumn(1).setResizable(false);
+		table.getColumnModel().getColumn(2).setResizable(false);
+		scrollPane.setViewportView(table);
+		
+		JTableHeader tableHeader = table.getTableHeader();
+		tableHeader.setOpaque(false);
+		tableHeader.setBackground(new Color(210, 210, 210));
+		tableHeader.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 14));
+		table.setRowHeight(28);
+		
+		JButton btnDownload = new JButton("Download");
+		
+		btnDownload.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 15));
+		btnDownload.setBounds(783, 399, 138, 37);
+		frmFileSharingSystem.getContentPane().add(btnDownload);
+		
+		JButton btnExit = new JButton("Exit");
+		
+		btnExit.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 15));
+		btnExit.setBounds(783, 578, 138, 37);
+		frmFileSharingSystem.getContentPane().add(btnExit);
+		
+		JLabel lblSharedFolder = new JLabel("Shared Folder");
+		lblSharedFolder.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 15));
+		lblSharedFolder.setBounds(348, 100, 117, 36);
+		frmFileSharingSystem.getContentPane().add(lblSharedFolder);
+		
+		sharedFolderInput = new JTextField();
+		lblSharedFolder.setLabelFor(sharedFolderInput);
+		sharedFolderInput.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 14));
+		sharedFolderInput.setColumns(10);
+		sharedFolderInput.setBounds(481, 106, 194, 24);
+		frmFileSharingSystem.getContentPane().add(sharedFolderInput);
+		
+		JFileChooser fileChooser = new JFileChooser();
+		
+		// Initialize UI
+		setupUiComponentAvailability(serverIPInput, usernameInput, btnConnect, 
+						btnMyFiles, btnSearch, btnDownload, isConnected);
+		
+		btnConnect.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+				btnConnect.setEnabled(false);
+				
+				if (!isConnected) {
+					String ipAddress = serverIPInput.getText();
+					String username = usernameInput.getText();
+					sharedFolder = sharedFolderInput.getText();
+					
+					String commandPortStr = commandPortInput.getText();
+					String streamPortStr = streamPortInput.getText();
+					
+					boolean check = true;
+					
+					int commandPort = -1;
+					int streamPort = -1;
+					
+					if (ipAddress.length() <= 0 || username.length() <= 0 || sharedFolder.length() <= 0 || 
+							commandPortStr.length() <= 0 || streamPortStr.length() <= 0) {
+						JOptionPane.showMessageDialog(null, "You have not filled in all the required information !!!");
+						check = false;
+					} else {
+						try {
+							commandPort = Integer.parseInt(commandPortStr);
+							streamPort = Integer.parseInt(streamPortStr);
+							
+							if (commandPort < 1025 || commandPort > 65535 || streamPort < 1025 || streamPort > 65535 || commandPort == streamPort) {
+								JOptionPane.showMessageDialog(null, "Please choose another port number !!!");
+								check = false;
+							}
+							
+						} catch (Exception ex) {
+							JOptionPane.showMessageDialog(null, "Ports must be Integer number !!!");
+						}
+						
+						File f = new File(System.getProperty("user.dir") + File.separator + sharedFolder);
+						if (!f.exists() || !f.isDirectory()) {
+							JOptionPane.showMessageDialog(null, "Shared Folder does not exist !!!");
+							check = false;
+						}
+						
+					}
+					
+					if (check) {
+						FileServerController.setCOMMAND_PORT(commandPort);
+						FileReceiverController.setFILE_STREAM_PORT(streamPort);
+
+						try {
+							fileServerController.accept();
+							System.out.println(123456);
+							clientController.connect(ipAddress, username, sharedFolder);
+//							fileTableView.setItems(getSharedFiles());
+
+							isConnected = true;
+						} catch (Exception ex) {
+							LOGGER.catching(ex);
+							JOptionPane.showMessageDialog(null, "Failed to connect to central server.\n" + ex.getMessage(),
+									"Connection Refused", JOptionPane.ERROR_MESSAGE);
+						}
+					}
+				} else {
+					fileServerController.close();
+					clientController.disconnect();
+					isConnected = false;
+				}
+				setupUiComponentAvailability(serverIPInput, usernameInput, btnConnect, 
+						btnMyFiles, btnSearch, btnDownload, isConnected);
+				
+				btnConnect.setEnabled(true);
+				
+			}
+		});
+		
+		btnSearch.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String searchText = searchInput.getText();
+				if (searchText.length() <= 0) {
+					JOptionPane.showMessageDialog(null, "Enter file name to search !!!");
+				} else {
+					results = clientController.searchFiles(searchText);
+				}
+			}
+		});
+		
+		btnAboutTeam.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				AboutUsFrame aboutUsFrame = new AboutUsFrame();
+				aboutUsFrame.setLocationRelativeTo(frmFileSharingSystem);
+				aboutUsFrame.setVisible(true);
+			}
+		});
+		
+		btnMyFiles.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				UpdateDBFrame updateDBFrame = new UpdateDBFrame(clientController, fileServerController, 
+						fileReceiverController, sharedFolder, LOGGER);
+				updateDBFrame.setLocationRelativeTo(frmFileSharingSystem);
+				updateDBFrame.setVisible(true);
+			}
+		});
+		
+		btnDownload.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+				btnDownload.setText("Please wait ...");
+				btnDownload.setEnabled(false);
+				
+				int row = table.getSelectedRow();
+//				String fileName = table.getModel().getValueAt(row, 0).toString();
+				SharedFileModel selectedFile = results.get(row);
+				
+				fileChooser.showSaveDialog(null);
+				File file = fileChooser.getSelectedFile();
+				
+				if ( file != null ) {
+					Long checksum = selectedFile.getChecksum();
+
+					try {
+						if ( fileServerController.contains(checksum) ) {
+							throw new Exception("The file is shared by yourself.");
+						}
+
+						String ipAddress = clientController.getFileSharerIp(selectedFile);
+						
+						if ( !ipAddress.equals("N/a") ) {
+							LOGGER.debug("The IP of sharer: " + ipAddress);
+
+							// Receive files and check if checksum is the same
+							fileReceiverController.receiveFile(checksum, file.getAbsolutePath(), ipAddress, 123456);
+							
+							long receivedChecksum = FileUtils.checksum(file, new CRC32()).getValue();
+
+							if ( checksum.equals(receivedChecksum) ) {
+								LOGGER.info("File successfully received to: " + file.getAbsolutePath());
+							} else {
+								throw new Exception("Checksum is not the same, please try again.");
+							}
+						} else {
+							throw new Exception("The file is no longer shared.");
+						}
+					} catch ( Exception ex ) {
+						LOGGER.catching(ex);
+						
+						JOptionPane.showMessageDialog(null, "Failed to receive a file from another sharer.\n" + ex.getMessage(),
+								"Receive File Failed", JOptionPane.ERROR_MESSAGE);
+					}
+				}
+				btnDownload.setText("Download");
+				btnAboutTeam.setEnabled(true);
+			}
+		});
+		
+		btnExit.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				System.exit(0);
+			}
+		});
+		
+		
 	}
+	
+	/**
+	 * Setup the availability of components in UI.
+	 * 
+	 * @param serverIpTextField    the text field for server IP
+	 * @param nickNameTextField    the text field for nick name
+	 * @param connectServerButton  the button for connecting/disconnect to/from server
+	 * @param shareFileButton      the button for sharing files
+	 * @param unshareFileButton    the button for unsharing the selected file
+	 * @param getSharedFilesButton the button for get shared files
+	 * @param receiveFileButton    the button for receive the selected file
+	 * @param fileTableView        the TableView for display all shared files
+	 * @param isConnected          whether is connected to server right now
+	 */
+	private void setupUiComponentAvailability(JTextField serverIpTextField, JTextField nickNameTextField,
+			JButton connectServerButton, JButton myFilesButton, JButton searchButton, 
+			JButton downloadButton, boolean isConnected) {
+		if (isConnected) {
+			serverIpTextField.setEditable(false);
+			nickNameTextField.setEditable(false);
+			connectServerButton.setText("Disconnect");
+			myFilesButton.setEnabled(true);
+			searchButton.setEnabled(true);
+			
+		} else {
+			serverIpTextField.setEditable(true);
+			nickNameTextField.setEditable(true);
+			connectServerButton.setText("Connect");
+			myFilesButton.setEnabled(false);
+			searchButton.setEnabled(false);
+			downloadButton.setEnabled(false);
+		}
+	}
+
 }

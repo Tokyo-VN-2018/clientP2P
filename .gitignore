@@ -3,6 +3,7 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,eclipse,java,maven
 
 sharedFolder
+sharedFolder2
 src/main/java/com/infinity/client/Test.java
 ### Eclipse ###
 .metadata
