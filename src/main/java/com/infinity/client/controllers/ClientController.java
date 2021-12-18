@@ -106,8 +106,7 @@ public class ClientController {
 		// Receive ACK from server
 		String ackMessage = inputStreamReader.readLine();
 		JSONObject ackMessJsonObject = (JSONObject) JSON.parse(ackMessage);
-		JSONObject messObject = ackMessJsonObject.getJSONObject("payload");
-		if ( messObject.getString("message").equals("ACCEPT") ) {
+		if ( ackMessJsonObject.getString("message").equals("ACCEPT") ) {
 			LOGGER.info("Connected to server.");
 		} else {
 			LOGGER.warn("Server closed socket for unknown reason.");
@@ -222,12 +221,12 @@ public class ClientController {
 	 * @param checksum the checksum of the file
 	 * @return the IP of the sharer or N/a if the file is not available
 	 */
-	public String getFileSharerIp(SharedFileModel sharedFile) {
+	public Object[] getFileSharerInfo(SharedFileModel sharedFile) {
 		
 		// Send share command to server
 		
 		GetSharerIPMessModel requestIPMessObj = new GetSharerIPMessModel();
-		requestIPMessObj.setStatus("IPREQUEST");
+		requestIPMessObj.setStatus("INFOREQUEST");
 		requestIPMessObj.setPayload(sharedFile);
 		
 		String requestIPMess = JSON.toJSONString(requestIPMessObj);
@@ -237,18 +236,21 @@ public class ClientController {
 		// Receive response from server
 		try {
 			String response = inputStreamReader.readLine();
-			LOGGER.debug("[RequestSharerIP] Received message from server: " + response);
+			LOGGER.debug("[RequestSharerInfo] Received message from server: " + response);
 			
 			JSONObject responseInJson = (JSONObject)(JSON.parse(response));
-			String IP = responseInJson.getString("message");
+			JSONObject payloadObject = responseInJson.getJSONObject("payload");
+			
+			String IP = payloadObject.getString("ip");
+			Integer commandPort = payloadObject.getInteger("commandPort");
 
-			if ( !IP.equals("N/a") ) {
-				return IP;
+			if ( !IP.equals("N/a") && commandPort != -1) {
+				return new Object[] {IP, commandPort};
 			}
 		} catch ( IOException ex ) {
 			LOGGER.catching(ex);
 		}
-		return "N/a";
+		return null;
 	}
 	
 	/**

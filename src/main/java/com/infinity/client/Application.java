@@ -26,6 +26,7 @@ import javax.swing.JTable;
 import java.awt.Color;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+import javax.swing.table.TableModel;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -76,7 +77,7 @@ public class Application {
 	/**
 	 * A variable stores results search
 	 */
-	List<SharedFileModel> results;
+	List<SharedFileModel> results = new ArrayList<>();
 
 	/**
 	 * Logger.
@@ -212,9 +213,9 @@ public class Application {
 		table.setFont(new Font("UD Digi Kyokasho NK-B", Font.PLAIN, 14));
 		table.setModel(new DefaultTableModel(
 			new Object[][] {
-				{"test1.txt", "vana", "123456"},
-				{"xinchao.txt", "hanoi", "94357"},
-				{"helloworld", "newyork", "31702"},
+				{null, null, null},
+				{null, null, null},
+				{null, null, null},
 				{null, null, null},
 				{null, null, null},
 				{null, null, null},
@@ -277,7 +278,7 @@ public class Application {
 		
 		// Initialize UI
 		setupUiComponentAvailability(serverIPInput, usernameInput, btnConnect, 
-						btnMyFiles, btnSearch, btnDownload, isConnected);
+						btnMyFiles, btnSearch, btnDownload, table, isConnected);
 		
 		btnConnect.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -346,7 +347,7 @@ public class Application {
 					isConnected = false;
 				}
 				setupUiComponentAvailability(serverIPInput, usernameInput, btnConnect, 
-						btnMyFiles, btnSearch, btnDownload, isConnected);
+						btnMyFiles, btnSearch, btnDownload, table, isConnected);
 				
 				btnConnect.setEnabled(true);
 				
@@ -359,7 +360,19 @@ public class Application {
 				if (searchText.length() <= 0) {
 					JOptionPane.showMessageDialog(null, "Enter file name to search !!!");
 				} else {
-					results = clientController.searchFiles(searchText);
+					results.clear();
+					List<SharedFileModel> searchResults = clientController.searchFiles(searchText);
+					results.addAll(searchResults);
+					
+					clearDataTable(table);
+					int count = 0;
+					for (SharedFileModel file : results) {
+						table.getModel().setValueAt(file.getFileName(), count, 0);
+						table.getModel().setValueAt(file.getSharer(), count, 1);
+						table.getModel().setValueAt(file.getSize(), count, 2);
+						count++;
+					}
+					
 				}
 			}
 		});
@@ -384,51 +397,59 @@ public class Application {
 		btnDownload.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				
-				btnDownload.setText("Please wait ...");
-				btnDownload.setEnabled(false);
-				
 				int row = table.getSelectedRow();
-//				String fileName = table.getModel().getValueAt(row, 0).toString();
-				SharedFileModel selectedFile = results.get(row);
+				System.out.println(row);
 				
-				fileChooser.showSaveDialog(null);
-				File file = fileChooser.getSelectedFile();
-				
-				if ( file != null ) {
-					Long checksum = selectedFile.getChecksum();
+				if (results.size() > 0 && row <= results.size()) {
+					
+					btnDownload.setText("Please wait ...");
+					btnDownload.setEnabled(false);
+					
+//					String fileName = table.getModel().getValueAt(row, 0).toString();
+					SharedFileModel selectedFile = results.get(row);
+					
+					fileChooser.showSaveDialog(null);
+					File file = fileChooser.getSelectedFile();
+					
+					if ( file != null ) {
+						Long checksum = selectedFile.getChecksum();
 
-					try {
-						if ( fileServerController.contains(checksum) ) {
-							throw new Exception("The file is shared by yourself.");
-						}
-
-						String ipAddress = clientController.getFileSharerIp(selectedFile);
-						
-						if ( !ipAddress.equals("N/a") ) {
-							LOGGER.debug("The IP of sharer: " + ipAddress);
-
-							// Receive files and check if checksum is the same
-							fileReceiverController.receiveFile(checksum, file.getAbsolutePath(), ipAddress, 123456);
-							
-							long receivedChecksum = FileUtils.checksum(file, new CRC32()).getValue();
-
-							if ( checksum.equals(receivedChecksum) ) {
-								LOGGER.info("File successfully received to: " + file.getAbsolutePath());
-							} else {
-								throw new Exception("Checksum is not the same, please try again.");
+						try {
+							if ( fileServerController.contains(checksum) ) {
+								throw new Exception("The file is shared by yourself.");
 							}
-						} else {
-							throw new Exception("The file is no longer shared.");
+
+							Object[] info = clientController.getFileSharerInfo(selectedFile);
+							
+							if ( info != null ) {
+								LOGGER.debug("Info of sharer: IP:" + info[0]+ " At port: "+ info[1]);
+
+								// Receive files and check if checksum is the same
+								fileReceiverController.receiveFile(checksum, file.getAbsolutePath(), (String)info[0], (Integer)info[1]);
+								
+								long receivedChecksum = FileUtils.checksum(file, new CRC32()).getValue();
+
+								if ( checksum.equals(receivedChecksum) ) {
+									LOGGER.info("File successfully received to: " + file.getAbsolutePath());
+								} else {
+									throw new Exception("Checksum is not the same, please try again.");
+								}
+							} else {
+								throw new Exception("The file is no longer shared.");
+							}
+							
+						} catch ( Exception ex ) {
+							LOGGER.catching(ex);
+							
+							JOptionPane.showMessageDialog(null, "Failed to receive a file from another sharer.\n" + ex.getMessage(),
+									"Receive File Failed", JOptionPane.ERROR_MESSAGE);
 						}
-					} catch ( Exception ex ) {
-						LOGGER.catching(ex);
-						
-						JOptionPane.showMessageDialog(null, "Failed to receive a file from another sharer.\n" + ex.getMessage(),
-								"Receive File Failed", JOptionPane.ERROR_MESSAGE);
 					}
+					
+					btnDownload.setText("Download");
+					btnAboutTeam.setEnabled(true);
 				}
-				btnDownload.setText("Download");
-				btnAboutTeam.setEnabled(true);
+				
 			}
 		});
 		
@@ -445,32 +466,39 @@ public class Application {
 	 * Setup the availability of components in UI.
 	 * 
 	 * @param serverIpTextField    the text field for server IP
-	 * @param nickNameTextField    the text field for nick name
+	 * @param usernameTextField    the text field for nick name
 	 * @param connectServerButton  the button for connecting/disconnect to/from server
-	 * @param shareFileButton      the button for sharing files
-	 * @param unshareFileButton    the button for unsharing the selected file
-	 * @param getSharedFilesButton the button for get shared files
-	 * @param receiveFileButton    the button for receive the selected file
-	 * @param fileTableView        the TableView for display all shared files
+	 * @param searchButton 		the button for search files in Server
+	 * @param downloadButton    the button for download the selected file
+	 * @param myFilesButton        the button for display all shared files / update DB
 	 * @param isConnected          whether is connected to server right now
 	 */
-	private void setupUiComponentAvailability(JTextField serverIpTextField, JTextField nickNameTextField,
+	private void setupUiComponentAvailability(JTextField serverIpTextField, JTextField usernameTextField,
 			JButton connectServerButton, JButton myFilesButton, JButton searchButton, 
-			JButton downloadButton, boolean isConnected) {
+			JButton downloadButton, JTable table, boolean isConnected) {
 		if (isConnected) {
 			serverIpTextField.setEditable(false);
-			nickNameTextField.setEditable(false);
+			usernameTextField.setEditable(false);
 			connectServerButton.setText("Disconnect");
 			myFilesButton.setEnabled(true);
 			searchButton.setEnabled(true);
 			
 		} else {
 			serverIpTextField.setEditable(true);
-			nickNameTextField.setEditable(true);
+			usernameTextField.setEditable(true);
 			connectServerButton.setText("Connect");
 			myFilesButton.setEnabled(false);
 			searchButton.setEnabled(false);
 			downloadButton.setEnabled(false);
+			clearDataTable(table);
+		}
+	}
+	
+	private void clearDataTable(JTable table) {
+		for (int i = 0; i < table.getRowCount(); i++) {
+			for (int j = 0; j < table.getColumnCount(); j++) {
+				table.getModel().setValueAt(null, i, j);
+			}
 		}
 	}
 
