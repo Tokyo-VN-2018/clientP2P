@@ -75,7 +75,7 @@ public class ClientController {
 	 * @param username  the nick name of the user
 	 * @throws Exception 
 	 */
-	public void connect(String ipAddress, String username) 
+	public void connect(String ipAddress, String username, String sharedFolderName) 
 			throws Exception {
 		this.ipAddress = ipAddress;
 		this.username = username;
@@ -88,10 +88,14 @@ public class ClientController {
         connectMess.setStatus("CONNECT");
         connectMess.setUsername(username);
         
-        List<SharedFileModel> currentFilesInSharedFolder = FileServerController.getFilesInSharedFolder();
+        List<SharedFileModel> currentFilesInSharedFolder = FileServerController.getFilesInSharedFolder(sharedFolderName);
         for (SharedFileModel element : currentFilesInSharedFolder) {
+        	// Create request message
             element.setSharer(username);
             connectMess.addSharedFile(element);
+            
+            // Initial list shared files
+            FileServerController.shareNewFile(element.getChecksum(), element);
         }
         
         String reqMess = JSON.toJSONString(connectMess);
@@ -226,7 +230,7 @@ public class ClientController {
 		requestIPMessObj.setStatus("IPREQUEST");
 		requestIPMessObj.setPayload(sharedFile);
 		
-		String requestIPMess = JSON.toJSONString(requestIPMessObj, true);
+		String requestIPMess = JSON.toJSONString(requestIPMessObj);
 		
 		outputStreamWriter.println(requestIPMess);
 
