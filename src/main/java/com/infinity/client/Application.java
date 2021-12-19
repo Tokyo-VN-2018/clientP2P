@@ -13,8 +13,6 @@ import javax.swing.JFileChooser;
 
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.CRC32;
@@ -26,8 +24,6 @@ import javax.swing.JTable;
 import java.awt.Color;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
-import javax.swing.table.TableModel;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -483,6 +479,9 @@ public class Application {
 		if (isConnected) {
 			serverIpTextField.setEditable(false);
 			usernameTextField.setEditable(false);
+			commandPortInput.setEditable(false);
+			streamPortInput.setEditable(false);
+			sharedFolderInput.setEditable(false);
 			connectServerButton.setText("Disconnect");
 			myFilesButton.setEnabled(true);
 			searchButton.setEnabled(true);
@@ -498,7 +497,7 @@ public class Application {
 		}
 	}
 	
-	private void clearDataTable(JTable table) {
+	public static void clearDataTable(JTable table) {
 		for (int i = 0; i < table.getRowCount(); i++) {
 			for (int j = 0; j < table.getColumnCount(); j++) {
 				table.getModel().setValueAt(null, i, j);
