@@ -42,8 +42,8 @@ public class UpdateDBFrame extends JFrame {
 	 * Create the frame.
 	 */
 	public UpdateDBFrame(ClientController clientController, FileServerController fileServerController, 
-			FileReceiverController fileReceiverController, String sharedFolderName, Logger LOGGER) {
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			FileReceiverController fileReceiverController, String username, String sharedFolderName, Logger LOGGER) {
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 671, 497);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -118,8 +118,9 @@ public class UpdateDBFrame extends JFrame {
 		
 		List<SharedFileModel> actualSharedFilesModel = FileServerController.getFilesInSharedFolder(sharedFolderName);
 		List<Long> actualSharedFile = new ArrayList<Long>();
-		for (SharedFileModel files : actualSharedFilesModel) {
-			actualSharedFile.add(files.getChecksum());
+		for (SharedFileModel file : actualSharedFilesModel) {
+			file.setSharer(username);
+			actualSharedFile.add(file.getChecksum());
 		}
 		
 		List<Long> currentDBSharedFiles = new ArrayList<Long>();
