@@ -17,7 +17,8 @@ import org.apache.logging.log4j.Logger;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.infinity.client.models.ConnectMessModel;
-import com.infinity.client.models.GetSharerIPMessModel;
+import com.infinity.client.models.ErrorReportModel;
+import com.infinity.client.models.GetSharerInfoMessModel;
 import com.infinity.client.models.ShareFileMessModel;
 import com.infinity.client.models.SharedFileModel;
 import com.infinity.client.models.UnShareFileMessModel;
@@ -84,6 +85,8 @@ public class ClientController {
                 new InputStreamReader(socket.getInputStream()));
 		this.outputStreamWriter = new PrintWriter(socket.getOutputStream(), true);
 		
+		socket.setSoTimeout(5000);
+		
 		ConnectMessModel connectMess = new ConnectMessModel();
         connectMess.setStatus("CONNECT");
         connectMess.setUsername(username);
@@ -102,9 +105,12 @@ public class ClientController {
         
 		// Send connect message to server
 		outputStreamWriter.println(reqMess);
+		LOGGER.info("Send connection request to server: " + reqMess);
+		
 		
 		// Receive ACK from server
 		String ackMessage = inputStreamReader.readLine();
+		
 		JSONObject ackMessJsonObject = (JSONObject) JSON.parse(ackMessage);
 		if ( ackMessJsonObject.getString("message").equals("ACCEPT") ) {
 			LOGGER.info("Connected to server.");
@@ -129,6 +135,7 @@ public class ClientController {
 		String searchMess = searchObj.toJSONString();
 		
 		outputStreamWriter.println(searchMess);
+		LOGGER.info("Send search file request to server: " + searchMess);
 
 		// Receive response from server
 		List<SharedFileModel> sharedFiles = new ArrayList<>();
@@ -165,6 +172,7 @@ public class ClientController {
 		
 		// Send publish command to server
 		outputStreamWriter.println(publishMess);
+		LOGGER.info("Send share file request to server: " + publishMess);
 
 		// Receive response from server
 		try {
@@ -199,6 +207,7 @@ public class ClientController {
 		String unpublishMess = JSON.toJSONString(unpublishMessObj);
 		
 		outputStreamWriter.println(unpublishMess);
+		LOGGER.info("Send unshare file request to server: " + unpublishMess);
 
 		// Receive response from server
 		try {
@@ -225,13 +234,14 @@ public class ClientController {
 		
 		// Send share command to server
 		
-		GetSharerIPMessModel requestIPMessObj = new GetSharerIPMessModel();
+		GetSharerInfoMessModel requestIPMessObj = new GetSharerInfoMessModel();
 		requestIPMessObj.setStatus("INFOREQUEST");
 		requestIPMessObj.setPayload(sharedFile);
 		
 		String requestIPMess = JSON.toJSONString(requestIPMessObj);
 		
 		outputStreamWriter.println(requestIPMess);
+		LOGGER.info("Send get file sharer info request to server: " + requestIPMess);
 
 		// Receive response from server
 		try {
@@ -251,6 +261,20 @@ public class ClientController {
 			LOGGER.catching(ex);
 		}
 		return null;
+	}
+	
+	/**
+	 * Report to server when cannot download a file.
+	 */
+	public void reportDownloadErr(SharedFileModel sharedFile) {
+		ErrorReportModel errReportMessObj = new ErrorReportModel();
+		errReportMessObj.setStatus("ERRDOWNLOAD");
+		errReportMessObj.setPayload(sharedFile);
+		
+		String errReportMess = JSON.toJSONString(errReportMessObj);
+		
+		outputStreamWriter.println(errReportMess);
+		LOGGER.info("Send error report to server: " + errReportMess);
 	}
 	
 	/**

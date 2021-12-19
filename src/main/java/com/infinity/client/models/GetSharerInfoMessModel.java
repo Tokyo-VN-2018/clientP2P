@@ -1,6 +1,6 @@
 package com.infinity.client.models;
 
-public class GetSharerIPMessModel {
+public class GetSharerInfoMessModel {
 
 	private String status;
 	

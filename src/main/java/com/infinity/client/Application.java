@@ -330,10 +330,10 @@ public class Application {
 
 						try {
 							fileServerController.accept();
-							System.out.println(123456);
 							clientController.connect(ipAddress, username, sharedFolder);
 //							fileTableView.setItems(getSharedFiles());
-
+							
+							System.out.println(999999);
 							isConnected = true;
 						} catch (Exception ex) {
 							LOGGER.catching(ex);
@@ -363,6 +363,10 @@ public class Application {
 					results.clear();
 					List<SharedFileModel> searchResults = clientController.searchFiles(searchText);
 					results.addAll(searchResults);
+					
+					if (results.size() > 10) {
+						results.subList(10, results.size()).clear();
+					}
 					
 					clearDataTable(table);
 					int count = 0;
@@ -440,7 +444,7 @@ public class Application {
 							
 						} catch ( Exception ex ) {
 							LOGGER.catching(ex);
-							
+							clientController.reportDownloadErr(selectedFile);
 							JOptionPane.showMessageDialog(null, "Failed to receive a file from another sharer.\n" + ex.getMessage(),
 									"Receive File Failed", JOptionPane.ERROR_MESSAGE);
 						}
