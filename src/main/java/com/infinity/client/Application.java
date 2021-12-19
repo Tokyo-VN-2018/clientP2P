@@ -273,8 +273,8 @@ public class Application {
 		JFileChooser fileChooser = new JFileChooser();
 		
 		// Initialize UI
-		setupUiComponentAvailability(serverIPInput, usernameInput, btnConnect, 
-						btnMyFiles, btnSearch, btnDownload, table, isConnected);
+		setupUiComponentAvailability(serverIPInput, usernameInput, commandPortInput, streamPortInput, sharedFolderInput,
+				btnConnect, btnMyFiles, btnSearch, btnDownload, table, isConnected);
 		
 		btnConnect.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -342,8 +342,8 @@ public class Application {
 					clientController.disconnect();
 					isConnected = false;
 				}
-				setupUiComponentAvailability(serverIPInput, usernameInput, btnConnect, 
-						btnMyFiles, btnSearch, btnDownload, table, isConnected);
+				setupUiComponentAvailability(serverIPInput, usernameInput, commandPortInput, streamPortInput, sharedFolderInput,
+						btnConnect, btnMyFiles, btnSearch, btnDownload, table, isConnected);
 				
 				btnConnect.setEnabled(true);
 				
@@ -467,6 +467,9 @@ public class Application {
 	 * 
 	 * @param serverIpTextField    the text field for server IP
 	 * @param usernameTextField    the text field for nick name
+	 * @param commandPortTextField    the text field for command port
+	 * @param streamPortTextField    the text field for stream file port
+	 * @param sharedFolderTextField    the text field for name of shared folder
 	 * @param connectServerButton  the button for connecting/disconnect to/from server
 	 * @param searchButton 		the button for search files in Server
 	 * @param downloadButton    the button for download the selected file
@@ -474,14 +477,15 @@ public class Application {
 	 * @param isConnected          whether is connected to server right now
 	 */
 	private void setupUiComponentAvailability(JTextField serverIpTextField, JTextField usernameTextField,
+			JTextField commandPortTextField, JTextField streamPortTextField, JTextField sharedFolderTextField,
 			JButton connectServerButton, JButton myFilesButton, JButton searchButton, 
 			JButton downloadButton, JTable table, boolean isConnected) {
 		if (isConnected) {
 			serverIpTextField.setEditable(false);
 			usernameTextField.setEditable(false);
-			commandPortInput.setEditable(false);
-			streamPortInput.setEditable(false);
-			sharedFolderInput.setEditable(false);
+			commandPortTextField.setEditable(false);
+			streamPortTextField.setEditable(false);
+			sharedFolderTextField.setEditable(false);
 			connectServerButton.setText("Disconnect");
 			myFilesButton.setEnabled(true);
 			searchButton.setEnabled(true);
@@ -489,6 +493,9 @@ public class Application {
 		} else {
 			serverIpTextField.setEditable(true);
 			usernameTextField.setEditable(true);
+			commandPortTextField.setEditable(true);
+			streamPortTextField.setEditable(true);
+			sharedFolderTextField.setEditable(true);
 			connectServerButton.setText("Connect");
 			myFilesButton.setEnabled(false);
 			searchButton.setEnabled(false);
