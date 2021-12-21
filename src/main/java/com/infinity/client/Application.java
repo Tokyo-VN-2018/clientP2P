@@ -325,7 +325,7 @@ public class Application {
 
 						try {
 							fileServerController.accept();
-							clientController.connect(ipAddress, username, sharedFolder);
+							clientController.connect(ipAddress, username, commandPort, sharedFolder);
 //							fileTableView.setItems(getSharedFiles());
 
 							isConnected = true;

@@ -76,7 +76,7 @@ public class ClientController {
 	 * @param username  the nick name of the user
 	 * @throws Exception 
 	 */
-	public void connect(String ipAddress, String username, String sharedFolderName) 
+	public void connect(String ipAddress, String username, int commandPort, String sharedFolderName) 
 			throws Exception {
 		this.ipAddress = ipAddress;
 		this.username = username;
@@ -90,6 +90,7 @@ public class ClientController {
 		ConnectMessModel connectMess = new ConnectMessModel();
         connectMess.setStatus("CONNECT");
         connectMess.setUsername(username);
+        connectMess.setCommandPort(commandPort);
         
         List<SharedFileModel> currentFilesInSharedFolder = FileServerController.getFilesInSharedFolder(sharedFolderName);
         for (SharedFileModel element : currentFilesInSharedFolder) {

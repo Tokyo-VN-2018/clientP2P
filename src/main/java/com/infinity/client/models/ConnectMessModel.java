@@ -9,6 +9,8 @@ public class ConnectMessModel {
 	
 	private String username;
 	
+	private int commandPort;
+	
 	private List<SharedFileModel> payload = new ArrayList<SharedFileModel>();
 	
 	public String getStatus() {
@@ -22,6 +24,12 @@ public class ConnectMessModel {
 	}
 	public void setUsername(String username) {
 		this.username = username;
+	}
+	public int getCommandPort() {
+		return commandPort;
+	}
+	public void setCommandPort(int commandPort) {
+		this.commandPort = commandPort;
 	}
 	public List<SharedFileModel> getPayload() {
 		return payload;
