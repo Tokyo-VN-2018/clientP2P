@@ -440,9 +440,10 @@ public class Application {
 							long receivedChecksum = FileUtils.checksum(file, new CRC32()).getValue();
 
 							if (checksum.equals(receivedChecksum)) {
+								JOptionPane.showMessageDialog(null, "Download file successfully !!!");
 								LOGGER.info("File successfully received to: " + file.getAbsolutePath());
 							} else {
-								throw new Exception("Checksum is not the same, please try again.");
+								throw new Exception("File download failed, please try again. !!!");
 							}
 						} else {
 							throw new Exception("The file is no longer shared.");

@@ -113,6 +113,8 @@ public class ClientController {
 		String ackMessage = inputStreamReader.readLine();
 		
 		JSONObject ackMessJsonObject = (JSONObject) JSON.parse(ackMessage);
+		LOGGER.info("[ConnectionReq] Received message from server: " + ackMessJsonObject.toJSONString());
+		
 		if ( ackMessJsonObject.getString("message").equals("ACCEPT") ) {
 			LOGGER.info("Connected to server.");
 		} else {
@@ -143,7 +145,7 @@ public class ClientController {
 		
 		try {
 			String response = inputStreamReader.readLine();
-			LOGGER.debug("[SearchFile] Received message from server: " + response);
+			LOGGER.info("[SearchFile] Received message from server: " + response);
 			
 			JSONObject responseInJson = (JSONObject)(JSON.parse(response));
 
@@ -178,7 +180,7 @@ public class ClientController {
 		// Receive response from server
 		try {
 			String response = inputStreamReader.readLine();
-			LOGGER.debug("[PublishFile] Received message from server: " + response);
+			LOGGER.info("[PublishFile] Received message from server: " + response);
 			
 			JSONObject responseInJson = (JSONObject)(JSON.parse(response));
 
@@ -213,7 +215,7 @@ public class ClientController {
 		// Receive response from server
 		try {
 			String response = inputStreamReader.readLine();
-			LOGGER.debug("[UnPublishFile] Received message from server: " + response);
+			LOGGER.info("[UnPublishFile] Received message from server: " + response);
 			
 			JSONObject responseInJson = (JSONObject)(JSON.parse(response));
 
@@ -247,7 +249,7 @@ public class ClientController {
 		// Receive response from server
 		try {
 			String response = inputStreamReader.readLine();
-			LOGGER.debug("[RequestSharerInfo] Received message from server: " + response);
+			LOGGER.info("[RequestSharerInfo] Received message from server: " + response);
 			
 			JSONObject responseInJson = (JSONObject)(JSON.parse(response));
 			JSONObject payloadObject = responseInJson.getJSONObject("payload");
@@ -291,6 +293,7 @@ public class ClientController {
 		String quitMess = quitObj.toJSONString();
 		
 		outputStreamWriter.println(quitMess);
+		LOGGER.info("Send quit request to server: " + quitMess);
 		
 		// CLose Socket
 		try {
