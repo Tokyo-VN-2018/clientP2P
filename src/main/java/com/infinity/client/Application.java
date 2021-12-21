@@ -361,6 +361,8 @@ public class Application {
 
 					if (results.size() > 10) {
 						results.subList(10, results.size()).clear();
+					} else if (results.size() == 0) {
+						JOptionPane.showMessageDialog(null, "File not found !!!");
 					}
 
 					clearDataTable(table);
