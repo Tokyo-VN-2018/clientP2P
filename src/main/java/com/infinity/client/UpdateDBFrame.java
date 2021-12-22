@@ -151,7 +151,10 @@ public class UpdateDBFrame extends JFrame {
 
 				for (Long cs : currentDBSharedFiles) {
 					if (!actualSharedFile.contains(cs)) {
-						payloadUnPublish.add(FileServerController.getSharedFiles().get(cs));
+						if (FileServerController.getSharedFiles().get(cs) != null) {
+							payloadUnPublish.add(FileServerController.getSharedFiles().get(cs));
+						}
+						
 					}
 				}
 				System.out.println(payloadUnPublish.size());
