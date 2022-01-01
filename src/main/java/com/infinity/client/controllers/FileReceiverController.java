@@ -58,12 +58,12 @@ public class FileReceiverController {
 	
 	/**
 	 * Receive file stream.
-	 * @param fileModel  file want to download
+	 * @param file	The file want to download
 	 * @param filePath  the file path to save the file
 	 * @param ipAddress the IP address of the sender
 	 * @throws Exception
 	 */
-	public void receiveFile(SharedFileModel fileModel, String filePath, String ipAddress, int HOST_COMMAND_PORT) throws Exception {
+	public void receiveFile(SharedFileModel file, String filePath, String ipAddress, int HOST_COMMAND_PORT) throws Exception {
 		DatagramSocket commandSocket = null;
 		ServerSocket fileStreamListener = null;
 		Socket fileStreamSocket = null;
@@ -80,7 +80,7 @@ public class FileReceiverController {
 			CheckFileMessModel checkMessObj = new CheckFileMessModel();
 			checkMessObj.setStatus("CHECK");
 			checkMessObj.setListeningPort(FILE_STREAM_PORT);
-			checkMessObj.setPayload(fileModel);
+			checkMessObj.setPayload(file);
 			
 			String checkMess = JSON.toJSONString(checkMessObj);
 			
@@ -113,6 +113,7 @@ public class FileReceiverController {
 			fileInputStream = new DataInputStream(new BufferedInputStream(fileStreamSocket.getInputStream()));
 			fileOutputStream = new DataOutputStream(new BufferedOutputStream(new BufferedOutputStream(new FileOutputStream(filePath))));
 			byte[] fileBuffer = new byte[BUFFER_SIZE];
+			
 			while ( true ) {
 				if ( fileInputStream == null ) {
 					return;
@@ -147,5 +148,4 @@ public class FileReceiverController {
 			}
 		}
 	}
-	
 }

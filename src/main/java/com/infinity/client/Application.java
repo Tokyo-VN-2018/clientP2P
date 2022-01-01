@@ -270,11 +270,11 @@ public class Application {
 		
 		serverIPInput.setText("127.0.0.1");
 		usernameInput.setText("Anonymous");
-
+		
 		// Initialize UI
 		setupUiComponentAvailability(serverIPInput, usernameInput, commandPortInput, streamPortInput, sharedFolderInput,
 				btnConnect, btnMyFiles, btnSearch, btnDownload, table, isConnected);
-
+		
 		btnConnect.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 
@@ -419,43 +419,57 @@ public class Application {
 				ReceivedFileModel selectedFile = results.get(row);
 
 				fileChooser.setSelectedFile(new File(selectedFile.getFileName()));
-				fileChooser.showSaveDialog(null);
-				File file = fileChooser.getSelectedFile();
+				int chooserState = fileChooser.showSaveDialog(null);
+				
+				if (chooserState == JFileChooser.APPROVE_OPTION) {
+					File file = fileChooser.getSelectedFile();
 
-				if (file != null) {
-					Long checksum = selectedFile.getChecksum();
+					if (file != null) {
+						Long checksum = selectedFile.getChecksum();
 
-					try {
-						
-						String ipSharer = selectedFile.getIp();
-						Integer commandPortSharer = selectedFile.getCommandPort();
-						
-						LOGGER.info("Info of sharer: IP:" + ipSharer + " At port: " + commandPortSharer);
-						
-						SharedFileModel fileToDownload = new SharedFileModel(selectedFile.getFileName(), selectedFile.getFilePath(), 
-								selectedFile.getChecksum(), selectedFile.getSize());
+						try {
+							
+							String ipSharer = selectedFile.getIp();
+							Integer commandPortSharer = selectedFile.getCommandPort();
+							
+							LOGGER.info("Info of sharer: IP:" + ipSharer + " At port: " + commandPortSharer);
+							
+							SharedFileModel fileToDownload = new SharedFileModel(selectedFile.getFileName(), selectedFile.getFilePath(), 
+									selectedFile.getChecksum(), selectedFile.getSize());
 
-						// Receive files and check if checksum is the same
-						fileReceiverController.receiveFile(fileToDownload, file.getAbsolutePath(), ipSharer, commandPortSharer);
+							// Receive files and check if checksum is the same
+							fileReceiverController.receiveFile(fileToDownload, file.getAbsolutePath(), ipSharer, commandPortSharer);
 
-						long receivedChecksum = FileUtils.checksum(file, new CRC32()).getValue();
+							long receivedChecksum = FileUtils.checksum(file, new CRC32()).getValue();
 
-						if (checksum.equals(receivedChecksum)) {
-							JOptionPane.showMessageDialog(null, "Download file successfully !!!");
-							LOGGER.info("File successfully received to: " + file.getAbsolutePath());
-						} else {
-							throw new Exception("File download failed, please try again. !!!");
+							if (checksum.equals(receivedChecksum)) {
+								JOptionPane.showMessageDialog(null, "Download file successfully !!!");
+								LOGGER.info("File successfully received to: " + file.getAbsolutePath());
+							} else {
+								
+								throw new Exception("File download failed, please try again. !!!");
+							}
+
+						} catch (Exception ex) {
+							LOGGER.catching(ex);
+							
+							try {
+							    FileUtils.forceDelete(FileUtils.getFile(file.getAbsolutePath()));
+							} catch (Exception e2) {
+								LOGGER.debug(e2.getMessage());
+							}
+							
+							clientController.reportDownloadErr(selectedFile.getId());
+							
+							JOptionPane.showMessageDialog(null,
+									"Failed to receive a file from another sharer.\n" + ex.getMessage(),
+									"Receive File Failed", JOptionPane.ERROR_MESSAGE);
 						}
-
-					} catch (Exception ex) {
-						LOGGER.catching(ex);
-						clientController.reportDownloadErr(selectedFile.getId());
-						JOptionPane.showMessageDialog(null,
-								"Failed to receive a file from another sharer.\n" + ex.getMessage(),
-								"Receive File Failed", JOptionPane.ERROR_MESSAGE);
 					}
 				}
-
+				
+				btnDownload.setEnabled(true);
+				
 				btnDownload.setText("Download");
 				btnAboutTeam.setEnabled(true);
 
@@ -521,5 +535,4 @@ public class Application {
 			}
 		}
 	}
-
 }
