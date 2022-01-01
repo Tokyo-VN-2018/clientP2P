@@ -36,6 +36,7 @@ import com.infinity.client.controllers.FileServerController;
 import com.infinity.client.models.ReceivedFileModel;
 import com.infinity.client.models.SharedFileModel;
 import javax.swing.ListSelectionModel;
+import javax.swing.JProgressBar;
 
 public class Application {
 
@@ -82,7 +83,7 @@ public class Application {
 	 * A variable stores results search
 	 */
 	List<ReceivedFileModel> results = new ArrayList<>();
-
+	
 	/**
 	 * Logger.
 	 */
@@ -275,6 +276,14 @@ public class Application {
 		setupUiComponentAvailability(serverIPInput, usernameInput, commandPortInput, streamPortInput, sharedFolderInput,
 				btnConnect, btnMyFiles, btnSearch, btnDownload, table, isConnected);
 		
+		JProgressBar progressBar = new JProgressBar(0, 100);
+		progressBar.setValue(0);
+		progressBar.setStringPainted(true);
+		progressBar.setFont(new Font("UD Digi Kyokasho NK-B", Font.PLAIN, 10));
+		progressBar.setBounds(770, 449, 160, 15);
+		frmFileSharingSystem.getContentPane().add(progressBar);
+		progressBar.setVisible(false);
+		
 		btnConnect.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 
@@ -425,30 +434,10 @@ public class Application {
 					File file = fileChooser.getSelectedFile();
 
 					if (file != null) {
-						Long checksum = selectedFile.getChecksum();
-
 						try {
-							
-							String ipSharer = selectedFile.getIp();
-							Integer commandPortSharer = selectedFile.getCommandPort();
-							
-							LOGGER.info("Info of sharer: IP:" + ipSharer + " At port: " + commandPortSharer);
-							
-							SharedFileModel fileToDownload = new SharedFileModel(selectedFile.getFileName(), selectedFile.getFilePath(), 
-									selectedFile.getChecksum(), selectedFile.getSize());
-
 							// Receive files and check if checksum is the same
-							fileReceiverController.receiveFile(fileToDownload, file.getAbsolutePath(), ipSharer, commandPortSharer);
-
-							long receivedChecksum = FileUtils.checksum(file, new CRC32()).getValue();
-
-							if (checksum.equals(receivedChecksum)) {
-								JOptionPane.showMessageDialog(null, "Download file successfully !!!");
-								LOGGER.info("File successfully received to: " + file.getAbsolutePath());
-							} else {
-								
-								throw new Exception("File download failed, please try again. !!!");
-							}
+							fileReceiverController.receiveFile(file, selectedFile, file.getAbsolutePath(),
+									progressBar, btnDownload, clientController);
 
 						} catch (Exception ex) {
 							LOGGER.catching(ex);
@@ -466,13 +455,10 @@ public class Application {
 									"Receive File Failed", JOptionPane.ERROR_MESSAGE);
 						}
 					}
+				} else {
+					btnDownload.setText("Download");
+					btnDownload.setEnabled(true);
 				}
-				
-				btnDownload.setEnabled(true);
-				
-				btnDownload.setText("Download");
-				btnAboutTeam.setEnabled(true);
-
 			}
 		});
 
