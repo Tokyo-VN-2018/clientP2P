@@ -141,7 +141,7 @@ public class UpdateDBFrame extends JFrame {
 							FileServerController.shareNewFile(sharedFile);
 						}
 						notificationText.setText("");
-						LOGGER.info("File shared: " + JSON.toJSONString(payloadPublish));
+//						LOGGER.info("File shared: " + JSON.toJSONString(payloadPublish));
 					} else {
 						JOptionPane.showMessageDialog(null,
 								"Something wrong with your network\n or there's a file have the same checksum. !!!");
@@ -162,7 +162,7 @@ public class UpdateDBFrame extends JFrame {
 							fileServerController.unshareFile(unsharedFile);
 						}
 						notificationText.setText("");
-						LOGGER.info("File unshared: " + JSON.toJSONString(payloadUnPublish));
+//						LOGGER.info("File unshared: " + JSON.toJSONString(payloadUnPublish));
 					} else {
 						JOptionPane.showMessageDialog(null, "Something wrong with your network !!!");
 					}

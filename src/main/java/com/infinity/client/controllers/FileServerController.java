@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.CRC32;
 
 import org.apache.commons.io.FileUtils;
@@ -44,7 +45,7 @@ public class FileServerController {
 	/**
 	 * The server socket used for receiving commands.
 	 */
-	private ServerSocket commandListener;
+	private DatagramSocket commandSocket;
 
 	/**
 	 * The port used for receiving commands.
@@ -80,24 +81,32 @@ public class FileServerController {
 		return INSTANCE;
 	}
 	
+	private final AtomicBoolean running = new AtomicBoolean(false);
+	
+	public void stop() {
+        running.set(false);
+    }
+	
 	/**
 	 * Receive the message from client.
 	 * @throws IOException
 	 */
 	public void accept() throws IOException {
 		Runnable commandListenerTask = () -> {
-			DatagramSocket commandSocket = null;
+			commandSocket = null;
 			try {
 				commandSocket = new DatagramSocket(COMMAND_PORT);
 				byte[] inputDataBuffer = new byte[BUFFER_SIZE];
 				byte[] outputDataBuffer = new byte[BUFFER_SIZE];
+				
+				running.set(true);
 
-				while ( true ) {
+				while ( running.get() ) {
 					DatagramPacket inputPacket = new DatagramPacket(inputDataBuffer, inputDataBuffer.length);
 					commandSocket.receive(inputPacket);
 					String request = new String(inputPacket.getData());
 					
-					LOGGER.debug("Received new message: " + request);
+					LOGGER.debug("Received new message: \n\t" + request);
 					JSONObject requestInJson = (JSONObject)(JSON.parse(request));
 
 					if ( requestInJson.getString("status").equals("CHECK") ) {
@@ -131,7 +140,7 @@ public class FileServerController {
 					}
 				}
 			} catch ( Exception ex ) {
-				LOGGER.catching(ex);
+//				LOGGER.catching(ex);
 			} finally {
 				if ( commandSocket != null ) {
 					commandSocket.close();
@@ -155,7 +164,7 @@ public class FileServerController {
 	 * Stop receiving file stream.
 	 */
 	public void close() {
-		closeSocket(commandListener);
+		closeSocket(commandSocket);
 	}
 	
 	/**
@@ -175,6 +184,8 @@ public class FileServerController {
 			socket = new Socket(ipAddress, REQUESTER_PORT);
 			fileInputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(filePath)));
 			fileOutputStream = new DataOutputStream(socket.getOutputStream());
+			
+			socket.setSoTimeout(5000);
 
 			byte[] fileBuffer = new byte[BUFFER_SIZE];
 			while ( true ) {
@@ -263,13 +274,9 @@ public class FileServerController {
 	 * Close socket for the server.
 	 * @param socket the server socket to close
 	 */
-	private void closeSocket(ServerSocket socket) {
-		try {
-			if ( socket != null ) {
-				socket.close();
-			}
-		} catch ( IOException ex ) {
-			LOGGER.catching(ex);
+	private void closeSocket(DatagramSocket socket) {
+		if ( socket != null ) {
+			socket.close();
 		}
 	}
 	

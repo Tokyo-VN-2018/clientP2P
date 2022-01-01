@@ -15,7 +15,6 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.CRC32;
 import java.awt.event.ActionEvent;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
@@ -271,6 +270,9 @@ public class Application {
 		
 		serverIPInput.setText("127.0.0.1");
 		usernameInput.setText("Anonymous");
+//		commandPortInput.setText("7701");
+//		streamPortInput.setText("7702");
+//		sharedFolderInput.setText("sharedFolder");
 		
 		// Initialize UI
 		setupUiComponentAvailability(serverIPInput, usernameInput, commandPortInput, streamPortInput, sharedFolderInput,
@@ -347,9 +349,11 @@ public class Application {
 						}
 					}
 				} else {
-					fileServerController.close();
 					clientController.disconnect();
+					fileServerController.stop();
+					fileServerController.close();
 					isConnected = false;
+					searchInput.setText("");
 				}
 				setupUiComponentAvailability(serverIPInput, usernameInput, commandPortInput, streamPortInput,
 						sharedFolderInput, btnConnect, btnMyFiles, btnSearch, btnDownload, table, isConnected);
@@ -362,6 +366,9 @@ public class Application {
 		btnSearch.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String searchText = searchInput.getText();
+				
+				clearDataTable(table);
+				
 				if (searchText.length() <= 0) {
 					JOptionPane.showMessageDialog(null, "Enter file name to search !!!");
 				} else {
@@ -375,7 +382,6 @@ public class Application {
 						JOptionPane.showMessageDialog(null, "File not found !!!");
 					}
 
-					clearDataTable(table);
 					int count = 0;
 					for (ReceivedFileModel file : results) {
 						table.getModel().setValueAt(file.getFileName(), count, 0);
@@ -385,6 +391,8 @@ public class Application {
 					}
 
 				}
+				
+				btnDownload.setEnabled(false);
 			}
 		});
 
@@ -451,7 +459,7 @@ public class Application {
 							clientController.reportDownloadErr(selectedFile.getId());
 							
 							JOptionPane.showMessageDialog(null,
-									"Failed to receive a file from another sharer.\n" + ex.getMessage(),
+									"Failed to receive a file from another sharer.\n",
 									"Receive File Failed", JOptionPane.ERROR_MESSAGE);
 						}
 					}
@@ -464,6 +472,11 @@ public class Application {
 
 		btnExit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				if(isConnected) {
+					clientController.disconnect();
+					fileServerController.stop();
+					fileServerController.close();
+				}
 				System.exit(0);
 			}
 		});

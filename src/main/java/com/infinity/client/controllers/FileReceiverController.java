@@ -107,6 +107,8 @@ public class FileReceiverController {
             		byte[] inputDataBuffer = new byte[BUFFER_SIZE];
             		byte[] outputDataBuffer = checkMess.getBytes();
             		
+            		commandSocket.setSoTimeout(5000);
+            		
             		DatagramPacket outputPacket = new DatagramPacket(outputDataBuffer,
             				outputDataBuffer.length, InetAddress.getByName(selectedFile.getIp()), selectedFile.getCommandPort());
             		commandSocket.send(outputPacket);
@@ -115,7 +117,7 @@ public class FileReceiverController {
             		commandSocket.receive(inputPacket);
             		String response = new String(inputPacket.getData());
             		
-            		LOGGER.debug("[Check] Received message from file owner: " + response);
+            		LOGGER.debug("[Check] Received message from file owner: \n\t" + response);
             		
             		JSONObject responseInJson = (JSONObject)(JSON.parse(response));
 
@@ -147,8 +149,11 @@ public class FileReceiverController {
         				
         				double increaseProgress = calculateProgress(bytesRead, selectedFile.getSize());
         				
+        				for (int i = (int)progress; i < (int) (progress + increaseProgress); i++) {
+        					setProgress(i);
+						}
                         progress += increaseProgress;
-                        setProgress((int) progress);
+                        
                     }
                     fileOutputStream.flush();
 				} finally {
@@ -187,7 +192,8 @@ public class FileReceiverController {
 						progressBar.setValue(100);
 						JOptionPane.showMessageDialog(null, "File Downloaded Successfully !!!");
 						progressBar.setVisible(false);
-						LOGGER.info("File successfully received to: " + file.getAbsolutePath());
+						progressBar.setValue(0);
+						LOGGER.info("File saved to: " + file.getAbsolutePath());
 					} else {
 						throw new Exception("File download failed, please try again. !!!");
 					}
@@ -203,9 +209,10 @@ public class FileReceiverController {
 					clientController.reportDownloadErr(selectedFile.getId());
 					
 					JOptionPane.showMessageDialog(null,
-							"Failed to receive a file from another sharer.\n" + e.getMessage(),
+							"Failed to download file from sharer.\n",
 							"Receive File Failed", JOptionPane.ERROR_MESSAGE);
 					progressBar.setVisible(false);
+					progressBar.setValue(0);
 				}
 
 				btnDownload.setText("Download");
