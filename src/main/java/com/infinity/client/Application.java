@@ -33,6 +33,7 @@ import org.apache.logging.log4j.Logger;
 import com.infinity.client.controllers.ClientController;
 import com.infinity.client.controllers.FileReceiverController;
 import com.infinity.client.controllers.FileServerController;
+import com.infinity.client.models.ReceivedFileModel;
 import com.infinity.client.models.SharedFileModel;
 import javax.swing.ListSelectionModel;
 
@@ -80,7 +81,7 @@ public class Application {
 	/**
 	 * A variable stores results search
 	 */
-	List<SharedFileModel> results = new ArrayList<>();
+	List<ReceivedFileModel> results = new ArrayList<>();
 
 	/**
 	 * Logger.
@@ -356,7 +357,7 @@ public class Application {
 					JOptionPane.showMessageDialog(null, "Enter file name to search !!!");
 				} else {
 					results.clear();
-					List<SharedFileModel> searchResults = clientController.searchFiles(searchText);
+					List<ReceivedFileModel> searchResults = clientController.searchFiles(searchText);
 					results.addAll(searchResults);
 
 					if (results.size() > 10) {
@@ -367,7 +368,7 @@ public class Application {
 
 					clearDataTable(table);
 					int count = 0;
-					for (SharedFileModel file : results) {
+					for (ReceivedFileModel file : results) {
 						table.getModel().setValueAt(file.getFileName(), count, 0);
 						table.getModel().setValueAt(file.getSharer(), count, 1);
 						table.getModel().setValueAt(file.getSize(), count, 2);
@@ -415,8 +416,9 @@ public class Application {
 				btnDownload.setEnabled(false);
 
 //					String fileName = table.getModel().getValueAt(row, 0).toString();
-				SharedFileModel selectedFile = results.get(row);
+				ReceivedFileModel selectedFile = results.get(row);
 
+				fileChooser.setSelectedFile(new File(selectedFile.getFileName()));
 				fileChooser.showSaveDialog(null);
 				File file = fileChooser.getSelectedFile();
 
@@ -424,34 +426,30 @@ public class Application {
 					Long checksum = selectedFile.getChecksum();
 
 					try {
-						if (fileServerController.contains(checksum)) {
-							throw new Exception("The file is shared by yourself.");
-						}
+						
+						String ipSharer = selectedFile.getIp();
+						Integer commandPortSharer = selectedFile.getCommandPort();
+						
+						LOGGER.info("Info of sharer: IP:" + ipSharer + " At port: " + commandPortSharer);
+						
+						SharedFileModel fileToDownload = new SharedFileModel(selectedFile.getFileName(), selectedFile.getFilePath(), 
+								selectedFile.getChecksum(), selectedFile.getSize());
 
-						Object[] info = clientController.getFileSharerInfo(selectedFile);
+						// Receive files and check if checksum is the same
+						fileReceiverController.receiveFile(fileToDownload, file.getAbsolutePath(), ipSharer, commandPortSharer);
 
-						if (info != null) {
-							LOGGER.info("Info of sharer: IP:" + (String)info[0] + " At port: " + (Integer)info[1]);
+						long receivedChecksum = FileUtils.checksum(file, new CRC32()).getValue();
 
-							// Receive files and check if checksum is the same
-							fileReceiverController.receiveFile(checksum, file.getAbsolutePath(), (String) info[0],
-									(Integer) info[1]);
-
-							long receivedChecksum = FileUtils.checksum(file, new CRC32()).getValue();
-
-							if (checksum.equals(receivedChecksum)) {
-								JOptionPane.showMessageDialog(null, "Download file successfully !!!");
-								LOGGER.info("File successfully received to: " + file.getAbsolutePath());
-							} else {
-								throw new Exception("File download failed, please try again. !!!");
-							}
+						if (checksum.equals(receivedChecksum)) {
+							JOptionPane.showMessageDialog(null, "Download file successfully !!!");
+							LOGGER.info("File successfully received to: " + file.getAbsolutePath());
 						} else {
-							throw new Exception("The file is no longer shared.");
+							throw new Exception("File download failed, please try again. !!!");
 						}
 
 					} catch (Exception ex) {
 						LOGGER.catching(ex);
-						clientController.reportDownloadErr(selectedFile);
+						clientController.reportDownloadErr(selectedFile.getId());
 						JOptionPane.showMessageDialog(null,
 								"Failed to receive a file from another sharer.\n" + ex.getMessage(),
 								"Receive File Failed", JOptionPane.ERROR_MESSAGE);

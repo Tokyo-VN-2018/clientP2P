@@ -6,11 +6,14 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -32,9 +35,9 @@ public class FileServerController {
 	 * The key stands for the checksum of the file.
 	 * The value stands for the absolute path of the file.
 	 */
-	private static Map<Long, SharedFileModel> sharedFiles = new Hashtable<Long, SharedFileModel>();
+	private static Map<String, SharedFileModel> sharedFiles = new Hashtable<String, SharedFileModel>();
 
-	public static Map<Long, SharedFileModel> getSharedFiles() {
+	public static Map<String, SharedFileModel> getSharedFiles() {
 		return sharedFiles;
 	}
 
@@ -99,7 +102,7 @@ public class FileServerController {
 
 					if ( requestInJson.getString("status").equals("CHECK") ) {
 						
-						Long checksum = requestInJson.getLong("checksum");
+						SharedFileModel requestedFile = JSON.toJavaObject(requestInJson.getJSONObject("payload"), SharedFileModel.class);
 						int requesterListeningPort = requestInJson.getInteger("listeningPort");
 						
 						String ipAddress = inputPacket.getAddress().toString().substring(1);
@@ -108,15 +111,15 @@ public class FileServerController {
 						JSONObject checkResObj = new JSONObject();
 						checkResObj.put("status", "CHECK");
 						
-
-						if ( sharedFiles.containsKey(checksum) ) {
+						String hashOfRequestedFile = getMd5(requestedFile);
+						if ( sharedFiles.containsKey(hashOfRequestedFile) ) {
 							checkResObj.put("message", "ACCEPT");
 							String checkRes = checkResObj.toJSONString();
 							
 							outputDataBuffer = checkRes.getBytes();
 							sendDatagramPacket(commandSocket, outputDataBuffer, ipAddress, port);
 							Thread.sleep(2000); // Wait for open socket for receiving files
-							sendFileStream(checksum, ipAddress, requesterListeningPort);
+							sendFileStream(hashOfRequestedFile, ipAddress, requesterListeningPort);
 							
 						} else {
 							checkResObj.put("message", "ERROR");
@@ -157,11 +160,12 @@ public class FileServerController {
 	
 	/**
 	 * Send file stream to the receiver.
-	 * @param checksum  the checksum of the file
-	 * @param ipAddress the IP address of the receiver
+	 * @param hash				hash of file information
+	 * @param ipAddress			the IP address of the receiver
+	 * @param REQUESTER_PORT	the port of requester who want to download file
 	 */
-	private void sendFileStream(Long checksum, String ipAddress, int REQUESTER_PORT) {
-		SharedFileModel fileToSend = sharedFiles.get(checksum);
+	private void sendFileStream(String hash, String ipAddress, int REQUESTER_PORT) {
+		SharedFileModel fileToSend = sharedFiles.get(hash);
 		String filePath = fileToSend.getFilePath();
 		Socket socket = null;
 		DataInputStream fileInputStream = null;
@@ -213,16 +217,16 @@ public class FileServerController {
 	 * @param checksum the checksum of the file
 	 * @param filePath the absolute path of the file
 	 */
-	public static void shareNewFile(Long checksum, SharedFileModel sharedFile) {
-		sharedFiles.put(checksum, sharedFile);
+	public static void shareNewFile(SharedFileModel file) {
+		sharedFiles.put(getMd5(file), file);
 	}
 	
 	/**
 	 * Remove a shared file from the file server because it is no longer shared.
 	 * @param checksum the checksum of the file
 	 */
-	public void unshareFile(Long checksum) {
-		sharedFiles.remove(checksum);
+	public void unshareFile(SharedFileModel file) {
+		sharedFiles.remove(getMd5(file));
 	}
 	
 	/**
@@ -230,8 +234,8 @@ public class FileServerController {
 	 * @param checksum - the checksum of the file
 	 * @return whether the shared file is available
 	 */
-	public boolean contains(Long checksum) {
-		return sharedFiles.containsKey(checksum);
+	public boolean contains(SharedFileModel file) {
+		return sharedFiles.containsKey(getMd5(file));
 	}
 	
 	/**
@@ -245,7 +249,7 @@ public class FileServerController {
         for (File file : files) {
 			try {
 				long checksum = FileUtils.checksum(file, new CRC32()).getValue();
-				SharedFileModel tempObj = new SharedFileModel(file.getName(), file.getCanonicalPath(), "", checksum, file.length());
+				SharedFileModel tempObj = new SharedFileModel(file.getName(), file.getCanonicalPath(), checksum, file.length());
 				listOfFile.add(tempObj);
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -268,4 +272,32 @@ public class FileServerController {
 			LOGGER.catching(ex);
 		}
 	}
+	
+	public static String getMd5(SharedFileModel file)
+    {
+        try {
+  
+            // Static getInstance method is called with hashing MD5
+            MessageDigest md = MessageDigest.getInstance("MD5");
+  
+            // digest() method is called to calculate message digest
+            //  of an input digest() return array of byte
+            byte[] messageDigest = md.digest(file.toString().getBytes());
+  
+            // Convert byte array into signum representation
+            BigInteger no = new BigInteger(1, messageDigest);
+  
+            // Convert message digest into hex value
+            String hashtext = no.toString(16);
+            while (hashtext.length() < 32) {
+                hashtext = "0" + hashtext;
+            }
+            return hashtext;
+        } 
+        // For specifying wrong message digest algorithms
+        catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
+	
 }

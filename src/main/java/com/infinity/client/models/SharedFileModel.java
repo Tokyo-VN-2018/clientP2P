@@ -12,11 +12,6 @@ public class SharedFileModel {
 	private String filePath;
 
 	/**
-	 * The nick name who share the file.
-	 */
-	private String sharer;
-
-	/**
 	 * The checksum of the file.
 	 */
 	private long checksum;
@@ -41,14 +36,12 @@ public class SharedFileModel {
 	 * 
 	 * @param fileName  the file name of the file
 	 * @param filePath  the file path of the file
-	 * @param sharer    the nick name who share the file
 	 * @param checksum  the checksum of the file
 	 * @param size      the size in Byte of the file
 	 */
-	public SharedFileModel(String fileName, String filePath, String sharer, long checksum, long size) {
+	public SharedFileModel(String fileName, String filePath, long checksum, long size) {
 		this.fileName = fileName;
 		this.filePath = filePath;
-		this.sharer = sharer;
 		this.checksum = checksum;
 		this.size = size;
 	}
@@ -67,14 +60,6 @@ public class SharedFileModel {
 
 	public void setFilePath(String filePath) {
 		this.filePath = filePath;
-	}
-
-	public String getSharer() {
-		return sharer;
-	}
-
-	public void setSharer(String sharer) {
-		this.sharer = sharer;
 	}
 
 	public long getChecksum() {
@@ -98,7 +83,7 @@ public class SharedFileModel {
 	}
 	
 	public String toString() {
-		return String.format("SharedFile [FileName=%s, FilePath=%s, Sharer=%s, Checksum=%s, Size=%d Byte]", 
-				new Object[] { fileName, filePath, sharer, checksum, size });
+		return String.format("SharedFile [FileName=%s, FilePath=%s, Checksum=%s, Size=%d Byte]", 
+				new Object[] { fileName, filePath, checksum, size });
 	}
 }

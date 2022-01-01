@@ -17,11 +17,9 @@ import org.apache.logging.log4j.Logger;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.infinity.client.models.ConnectMessModel;
-import com.infinity.client.models.ErrorReportModel;
-import com.infinity.client.models.GetSharerInfoMessModel;
-import com.infinity.client.models.ShareFileMessModel;
+import com.infinity.client.models.ReceivedFileModel;
+import com.infinity.client.models.UpdateMessModel;
 import com.infinity.client.models.SharedFileModel;
-import com.infinity.client.models.UnShareFileMessModel;
 
 public class ClientController {
 	/**
@@ -95,25 +93,26 @@ public class ClientController {
         List<SharedFileModel> currentFilesInSharedFolder = FileServerController.getFilesInSharedFolder(sharedFolderName);
         for (SharedFileModel element : currentFilesInSharedFolder) {
         	// Create request message
-            element.setSharer(username);
             connectMess.addSharedFile(element);
             
             // Initial list shared files
-            FileServerController.shareNewFile(element.getChecksum(), element);
+            FileServerController.shareNewFile(element);
         }
         
         String reqMess = JSON.toJSONString(connectMess);
         
 		// Send connect message to server
 		outputStreamWriter.println(reqMess);
-		LOGGER.info("Send connection request to server: " + reqMess);
+//		LOGGER.debug("Send connection request to server: " + reqMess);
+		System.out.println("Send connection request to server: \n\t" + reqMess);
 		
 		
 		// Receive ACK from server
 		String ackMessage = inputStreamReader.readLine();
 		
 		JSONObject ackMessJsonObject = (JSONObject) JSON.parse(ackMessage);
-		LOGGER.info("[ConnectionReq] Received message from server: " + ackMessJsonObject.toJSONString());
+//		LOGGER.debug("[ConnectionReq] Received message from server: \n" + ackMessJsonObject.toJSONString());
+		System.out.println("[ConnectionReq] Received message from server: \n\t" + ackMessJsonObject.toJSONString());
 		
 		if ( ackMessJsonObject.getString("message").equals("ACCEPT") ) {
 			LOGGER.info("Connected to server.");
@@ -127,7 +126,7 @@ public class ClientController {
 	 * Search from shared files right now from server.
 	 * @return the list of shared files
 	 */
-	public List<SharedFileModel> searchFiles(String fileName) {
+	public List<ReceivedFileModel> searchFiles(String fileName) {
 		
 		// Send Search command to server for querying shared files
 		
@@ -138,26 +137,28 @@ public class ClientController {
 		String searchMess = searchObj.toJSONString();
 		
 		outputStreamWriter.println(searchMess);
-		LOGGER.info("Send search file request to server: " + searchMess);
+//		LOGGER.info("Send search file request to server: " + searchMess);
+		System.out.println("Send search file request to server: \n\t" + searchMess);
 
 		// Receive response from server
-		List<SharedFileModel> sharedFiles = new ArrayList<>();
+		List<ReceivedFileModel> receivedFiles = new ArrayList<>();
 		
 		try {
 			String response = inputStreamReader.readLine();
-			LOGGER.info("[SearchFile] Received message from server: " + response);
+//			LOGGER.info("[SearchFile] Received message from server: " + response);
+			System.out.println("[SearchFile] Received message from server: \n\t" + response);
 			
 			JSONObject responseInJson = (JSONObject)(JSON.parse(response));
 
 			if ( !responseInJson.getString("message").equals("ERROR") ) {
-				sharedFiles = JSON.parseArray(responseInJson.getString("payload"), SharedFileModel.class);
+				receivedFiles = JSON.parseArray(responseInJson.getString("payload"), ReceivedFileModel.class);
 			}
 			
 		} catch ( IOException e ) {
 			LOGGER.catching(e);
 		}
 		
-		return sharedFiles;
+		return receivedFiles;
 	}
 	
 	/**
@@ -167,7 +168,7 @@ public class ClientController {
 	 */
 	public boolean shareFile(List<SharedFileModel> sharedFiles) {
 		
-		ShareFileMessModel publishMessObj = new ShareFileMessModel();
+		UpdateMessModel publishMessObj = new UpdateMessModel();
 		publishMessObj.setStatus("PUBLISH");
 		publishMessObj.setPayload(sharedFiles);
 		
@@ -175,12 +176,14 @@ public class ClientController {
 		
 		// Send publish command to server
 		outputStreamWriter.println(publishMess);
-		LOGGER.info("Send share file request to server: " + publishMess);
+//		LOGGER.info("Send share file request to server: " + publishMess);
+		System.out.println("Send share file request to server: \n\t" + publishMess);
 
 		// Receive response from server
 		try {
 			String response = inputStreamReader.readLine();
-			LOGGER.info("[PublishFile] Received message from server: " + response);
+//			LOGGER.info("[PublishFile] Received message from server: " + response);
+			System.out.println("[PublishFile] Received message from server: \n\t" + response);
 			
 			JSONObject responseInJson = (JSONObject)(JSON.parse(response));
 
@@ -203,19 +206,21 @@ public class ClientController {
 		
 		// Send unpublish command to server
 		
-		UnShareFileMessModel unpublishMessObj = new UnShareFileMessModel();
+		UpdateMessModel unpublishMessObj = new UpdateMessModel();
 		unpublishMessObj.setStatus("UNPUBLISH");
 		unpublishMessObj.setPayload(unshareFiles);
 		
 		String unpublishMess = JSON.toJSONString(unpublishMessObj);
 		
 		outputStreamWriter.println(unpublishMess);
-		LOGGER.info("Send unshare file request to server: " + unpublishMess);
+//		LOGGER.info("Send unshare file request to server: " + unpublishMess);
+		System.out.println("Send unshare file request to server: \n\t" + unpublishMess);
 
 		// Receive response from server
 		try {
 			String response = inputStreamReader.readLine();
-			LOGGER.info("[UnPublishFile] Received message from server: " + response);
+//			LOGGER.info("[UnPublishFile] Received message from server: " + response);
+			System.out.println("[UnPublishFile] Received message from server: \n\t" + response);
 			
 			JSONObject responseInJson = (JSONObject)(JSON.parse(response));
 
@@ -233,51 +238,55 @@ public class ClientController {
 	 * @param checksum the checksum of the file
 	 * @return the IP of the sharer or N/a if the file is not available
 	 */
-	public Object[] getFileSharerInfo(SharedFileModel sharedFile) {
-		
-		// Send share command to server
-		
-		GetSharerInfoMessModel requestIPMessObj = new GetSharerInfoMessModel();
-		requestIPMessObj.setStatus("INFOREQUEST");
-		requestIPMessObj.setPayload(sharedFile);
-		
-		String requestIPMess = JSON.toJSONString(requestIPMessObj);
-		
-		outputStreamWriter.println(requestIPMess);
-		LOGGER.info("Send get file sharer info request to server: " + requestIPMess);
-
-		// Receive response from server
-		try {
-			String response = inputStreamReader.readLine();
-			LOGGER.info("[RequestSharerInfo] Received message from server: " + response);
-			
-			JSONObject responseInJson = (JSONObject)(JSON.parse(response));
-			JSONObject payloadObject = responseInJson.getJSONObject("payload");
-			
-			String IP = payloadObject.getString("ip");
-			Integer commandPort = payloadObject.getInteger("commandPort");
-
-			if ( !IP.equals("N/a") && commandPort != -1) {
-				return new Object[] {IP, commandPort};
-			}
-		} catch ( IOException ex ) {
-			LOGGER.catching(ex);
-		}
-		return null;
-	}
+//	public Object[] getFileSharerInfo(SharedFileModel sharedFile) {
+//		
+//		// Send share command to server
+//		
+//		GetSharerInfoMessModel requestIPMessObj = new GetSharerInfoMessModel();
+//		requestIPMessObj.setStatus("INFOREQUEST");
+//		requestIPMessObj.setPayload(sharedFile);
+//		
+//		String requestIPMess = JSON.toJSONString(requestIPMessObj);
+//		
+//		outputStreamWriter.println(requestIPMess);
+////		LOGGER.info("Send get file sharer info request to server: " + requestIPMess);
+//		System.out.println("Send get file sharer info request to server: \n\t" + requestIPMess);
+//
+//		// Receive response from server
+//		try {
+//			String response = inputStreamReader.readLine();
+////			LOGGER.info("[RequestSharerInfo] Received message from server: " + response);
+//			System.out.println("[RequestSharerInfo] Received message from server: \n\t" + response);
+//			
+//			JSONObject responseInJson = (JSONObject)(JSON.parse(response));
+//			JSONObject payloadObject = responseInJson.getJSONObject("payload");
+//			
+//			String IP = payloadObject.getString("ip");
+//			Integer commandPort = payloadObject.getInteger("commandPort");
+//
+//			if ( !IP.equals("N/a") && commandPort != -1) {
+//				return new Object[] {IP, commandPort};
+//			}
+//		} catch ( IOException ex ) {
+//			LOGGER.catching(ex);
+//		}
+//		return null;
+//	}
 	
 	/**
 	 * Report to server when cannot download a file.
 	 */
-	public void reportDownloadErr(SharedFileModel sharedFile) {
-		ErrorReportModel errReportMessObj = new ErrorReportModel();
-		errReportMessObj.setStatus("ERRDOWNLOAD");
-		errReportMessObj.setPayload(sharedFile);
+	public void reportDownloadErr(String id) {
 		
-		String errReportMess = JSON.toJSONString(errReportMessObj);
+		JSONObject reportErrDownObj = new JSONObject();
+		reportErrDownObj.put("status", "ERRDOWNLOAD");
+		reportErrDownObj.put("payload", id);
 		
-		outputStreamWriter.println(errReportMess);
-		LOGGER.info("Send error report to server: " + errReportMess);
+		String reportErrDownMess = JSON.toJSONString(reportErrDownObj);
+		
+		outputStreamWriter.println(reportErrDownMess);
+//		LOGGER.info("Send error report to server: " + errReportMess);
+		System.out.println("Send error report to server: \n\t" + reportErrDownMess);
 	}
 	
 	/**
@@ -293,7 +302,8 @@ public class ClientController {
 		String quitMess = quitObj.toJSONString();
 		
 		outputStreamWriter.println(quitMess);
-		LOGGER.info("Send quit request to server: " + quitMess);
+//		LOGGER.info("Send quit request to server: " + quitMess);
+		System.out.println("Send quit request to server: \n\t" + quitMess);
 		
 		// CLose Socket
 		try {

@@ -17,6 +17,8 @@ import org.apache.logging.log4j.Logger;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.infinity.client.models.CheckFileMessModel;
+import com.infinity.client.models.SharedFileModel;
 
 public class FileReceiverController {
 
@@ -56,12 +58,12 @@ public class FileReceiverController {
 	
 	/**
 	 * Receive file stream.
-	 * @param checksum  the checksum of the file
+	 * @param fileModel  file want to download
 	 * @param filePath  the file path to save the file
 	 * @param ipAddress the IP address of the sender
 	 * @throws Exception
 	 */
-	public void receiveFile(long checksum, String filePath, String ipAddress, int HOST_COMMAND_PORT) throws Exception {
+	public void receiveFile(SharedFileModel fileModel, String filePath, String ipAddress, int HOST_COMMAND_PORT) throws Exception {
 		DatagramSocket commandSocket = null;
 		ServerSocket fileStreamListener = null;
 		Socket fileStreamSocket = null;
@@ -70,11 +72,17 @@ public class FileReceiverController {
 
 		try {
 			
-			JSONObject checkMessObj = new JSONObject();
-			checkMessObj.put("status", "CHECK");
-			checkMessObj.put("listeningPort", FILE_STREAM_PORT);
-			checkMessObj.put("checksum", checksum);
-			String checkMess = checkMessObj.toJSONString();
+//			JSONObject checkMessObj = new JSONObject();
+//			checkMessObj.put("status", "CHECK");
+//			checkMessObj.put("listeningPort", FILE_STREAM_PORT);
+//			checkMessObj.put("checksum", checksum);
+			
+			CheckFileMessModel checkMessObj = new CheckFileMessModel();
+			checkMessObj.setStatus("CHECK");
+			checkMessObj.setListeningPort(FILE_STREAM_PORT);
+			checkMessObj.setPayload(fileModel);
+			
+			String checkMess = JSON.toJSONString(checkMessObj);
 			
 			// Send command for requesting files
 			commandSocket = new DatagramSocket();

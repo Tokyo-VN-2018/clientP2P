@@ -104,19 +104,18 @@ public class UpdateDBFrame extends JFrame {
 		displayDataInTable(table, FileServerController.getSharedFiles());
 
 		List<SharedFileModel> actualSharedFilesModel = FileServerController.getFilesInSharedFolder(sharedFolderName);
-		List<Long> actualSharedFile = new ArrayList<Long>();
+		List<String> actualSharedFile = new ArrayList<String>();
 		for (SharedFileModel file : actualSharedFilesModel) {
-			file.setSharer(username);
-			actualSharedFile.add(file.getChecksum());
+			actualSharedFile.add(FileServerController.getMd5(file));
 		}
 
-		List<Long> currentDBSharedFiles = new ArrayList<Long>();
-		for (Long key : FileServerController.getSharedFiles().keySet()) {
-			currentDBSharedFiles.add(key);
+		List<String> currentSharedFiles = new ArrayList<String>();
+		for (String key : FileServerController.getSharedFiles().keySet()) {
+			currentSharedFiles.add(key);
 		}
 
-		int numActualSharedFiles = actualSharedFile.size();
-		int numCurrentDBSharedFiles = currentDBSharedFiles.size();
+//		int numActualSharedFiles = actualSharedFile.size();
+//		int numCurrentDBSharedFiles = currentSharedFiles.size();
 
 		notificationText.setText("Please update if you have changed the shared file !");
 //		if (numActualSharedFiles != numCurrentDBSharedFiles) {
@@ -131,7 +130,7 @@ public class UpdateDBFrame extends JFrame {
 				List<SharedFileModel> payloadUnPublish = new ArrayList<SharedFileModel>();
 
 				for (SharedFileModel sharedFile : actualSharedFilesModel) {
-					if (!fileServerController.contains(sharedFile.getChecksum())) {
+					if (!fileServerController.contains(sharedFile)) {
 						payloadPublish.add(sharedFile);
 					}
 				}
@@ -139,7 +138,7 @@ public class UpdateDBFrame extends JFrame {
 				if (payloadPublish.size() > 0) {
 					if (clientController.shareFile(payloadPublish)) {
 						for (SharedFileModel sharedFile : payloadPublish) {
-							FileServerController.shareNewFile(sharedFile.getChecksum(), sharedFile);
+							FileServerController.shareNewFile(sharedFile);
 						}
 						notificationText.setText("");
 						LOGGER.info("File shared: " + JSON.toJSONString(payloadPublish));
@@ -149,19 +148,18 @@ public class UpdateDBFrame extends JFrame {
 					}
 				}
 
-				for (Long cs : currentDBSharedFiles) {
-					if (!actualSharedFile.contains(cs)) {
-						if (FileServerController.getSharedFiles().get(cs) != null) {
-							payloadUnPublish.add(FileServerController.getSharedFiles().get(cs));
+				for (String hashOfFile : currentSharedFiles) {
+					if (!actualSharedFile.contains(hashOfFile)) {
+						if (FileServerController.getSharedFiles().get(hashOfFile) != null) {
+							payloadUnPublish.add(FileServerController.getSharedFiles().get(hashOfFile));
 						}
 						
 					}
 				}
-				System.out.println(payloadUnPublish.size());
 				if (payloadUnPublish.size() > 0) {
 					if (clientController.unshareFile(payloadUnPublish)) {
 						for (SharedFileModel unsharedFile : payloadUnPublish) {
-							fileServerController.unshareFile(unsharedFile.getChecksum());
+							fileServerController.unshareFile(unsharedFile);
 						}
 						notificationText.setText("");
 						LOGGER.info("File unshared: " + JSON.toJSONString(payloadUnPublish));
@@ -195,7 +193,7 @@ public class UpdateDBFrame extends JFrame {
 
 	}
 
-	private void displayDataInTable(JTable table, Map<Long, SharedFileModel> map) {
+	private void displayDataInTable(JTable table, Map<String, SharedFileModel> map) {
 		Application.clearDataTable(table);
 		int count = 0;
 		for (SharedFileModel file : map.values()) {
