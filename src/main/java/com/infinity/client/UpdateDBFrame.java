@@ -14,6 +14,7 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.Logger;
 
 import com.alibaba.fastjson.JSON;
@@ -69,26 +70,22 @@ public class UpdateDBFrame extends JFrame {
 
 		table = new JTable();
 		table.setModel(new DefaultTableModel(
-				new Object[][] { { null, null, null }, { null, null, null }, { null, null, null }, { null, null, null },
-						{ null, null, null }, { null, null, null }, { null, null, null }, { null, null, null },
-						{ null, null, null }, { null, null, null }, },
-				new String[] { "File Name", "Checksum", "Size (Byte)" }) {
-			/**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
-			Class[] columnTypes = new Class[] { String.class, Long.class, Long.class };
-
-			public Class getColumnClass(int columnIndex) {
-				return columnTypes[columnIndex];
+			new Object[][] {
+				{null, null, null},
+				{null, null, null},
+				{null, null, null},
+				{null, null, null},
+				{null, null, null},
+				{null, null, null},
+				{null, null, null},
+				{null, null, null},
+				{null, null, null},
+				{null, null, null},
+			},
+			new String[] {
+				"File Name", "Checksum", "Size"
 			}
-
-			boolean[] columnEditables = new boolean[] { false, false, false };
-
-			public boolean isCellEditable(int row, int column) {
-				return columnEditables[column];
-			}
-		});
+		));
 		table.getColumnModel().getColumn(0).setResizable(false);
 		table.getColumnModel().getColumn(1).setResizable(false);
 		table.getColumnModel().getColumn(2).setResizable(false);
@@ -199,7 +196,10 @@ public class UpdateDBFrame extends JFrame {
 		for (SharedFileModel file : map.values()) {
 			table.getModel().setValueAt(file.getFileName(), count, 0);
 			table.getModel().setValueAt(file.getChecksum(), count, 1);
-			table.getModel().setValueAt(file.getSize(), count, 2);
+//			table.getModel().setValueAt(file.getSize(), count, 2);
+			table.getModel().setValueAt(Application.humanReadableByteCountBin(file.getSize()), count, 2);
+//			table.getModel().setValueAt(FileUtils.byteCountToDisplaySize(file.getSize()), count, 2);
+			
 			count++;
 		}
 	}

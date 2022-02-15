@@ -13,6 +13,8 @@ import javax.swing.JFileChooser;
 
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.text.CharacterIterator;
+import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.awt.event.ActionEvent;
@@ -403,7 +405,8 @@ public class Application {
 					for (ReceivedFileModel file : results) {
 						table.getModel().setValueAt(file.getFileName(), count, 0);
 						table.getModel().setValueAt(file.getSharer(), count, 1);
-						table.getModel().setValueAt(file.getSize(), count, 2);
+//						table.getModel().setValueAt(file.getSize(), count, 2);
+						table.getModel().setValueAt(Application.humanReadableByteCountBin(file.getSize()), count, 2);
 						count++;
 					}
 
@@ -550,5 +553,20 @@ public class Application {
 				table.getModel().setValueAt(null, i, j);
 			}
 		}
+	}
+	
+	public static String humanReadableByteCountBin(long bytes) {
+	    long absB = bytes == Long.MIN_VALUE ? Long.MAX_VALUE : Math.abs(bytes);
+	    if (absB < 1024) {
+	        return bytes + " B";
+	    }
+	    long value = absB;
+	    CharacterIterator ci = new StringCharacterIterator("KMGTPE");
+	    for (int i = 40; i >= 0 && absB > 0xfffccccccccccccL >> i; i -= 10) {
+	        value >>= 10;
+	        ci.next();
+	    }
+	    value *= Long.signum(bytes);
+	    return String.format("%.1f %cB", value / 1024.0, ci.current());
 	}
 }
