@@ -261,17 +261,17 @@ public class Application {
 
 		sharedFolderInput = new JTextField();
 		lblSharedFolder.setLabelFor(sharedFolderInput);
-		sharedFolderInput.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 14));
+		sharedFolderInput.setFont(new Font("Arial", Font.BOLD, 14));
 		sharedFolderInput.setColumns(10);
-		sharedFolderInput.setBounds(481, 106, 194, 24);
+		sharedFolderInput.setBounds(481, 106, 160, 24);
 		frmFileSharingSystem.getContentPane().add(sharedFolderInput);
 
 		JFileChooser fileChooser = new JFileChooser();
 		
-		serverIPInput.setText("127.0.0.1");
+//		serverIPInput.setText("127.0.0.1");
 		usernameInput.setText("Anonymous");
-//		commandPortInput.setText("7701");
-//		streamPortInput.setText("7702");
+		commandPortInput.setText("7701");
+		streamPortInput.setText("7702");
 //		sharedFolderInput.setText("sharedFolder");
 		
 		// Initialize UI
@@ -284,6 +284,21 @@ public class Application {
 		progressBar.setFont(new Font("UD Digi Kyokasho NK-B", Font.PLAIN, 10));
 		progressBar.setBounds(770, 449, 160, 15);
 		frmFileSharingSystem.getContentPane().add(progressBar);
+		
+		JButton btnChooseFolder = new JButton("...");
+		btnChooseFolder.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser f = new JFileChooser();
+		        f.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY); 
+		        int chooserState = f.showDialog(null, "Choose");
+		        if (chooserState == JFileChooser.APPROVE_OPTION) {
+		        	sharedFolderInput.setText(f.getSelectedFile().toString());
+		        }
+			}
+		});
+		btnChooseFolder.setFont(new Font("UD Digi Kyokasho NK-B", Font.BOLD, 15));
+		btnChooseFolder.setBounds(643, 106, 32, 24);
+		frmFileSharingSystem.getContentPane().add(btnChooseFolder);
 		progressBar.setVisible(false);
 		
 		btnConnect.addActionListener(new ActionListener() {
@@ -323,7 +338,8 @@ public class Application {
 							JOptionPane.showMessageDialog(null, "Ports must be Integer number !!!");
 						}
 
-						File f = new File(System.getProperty("user.dir") + File.separator + sharedFolder);
+//						File f = new File(System.getProperty("user.dir") + File.separator + sharedFolder);
+						File f = new File(sharedFolder);
 						if (!f.exists() || !f.isDirectory()) {
 							JOptionPane.showMessageDialog(null, "Shared Folder does not exist !!!");
 							check = false;
@@ -352,6 +368,7 @@ public class Application {
 					clientController.disconnect();
 					fileServerController.stop();
 					fileServerController.close();
+					fileReceiverController.close();
 					isConnected = false;
 					searchInput.setText("");
 				}

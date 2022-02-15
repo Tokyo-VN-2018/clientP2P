@@ -49,7 +49,7 @@ public class FileReceiverController {
 	/**
 	 * The buffer size of the file stream.
 	 */
-	private static final int BUFFER_SIZE = 4096;
+	private static final int BUFFER_SIZE = 49152;
 
 	/**
 	 * The unique instance of FileReceiver.
@@ -66,6 +66,10 @@ public class FileReceiverController {
 	public static FileReceiverController getInstance() {
 		return INSTANCE;
 	}
+	
+	public DatagramSocket commandSocket;
+	public ServerSocket fileStreamListener;
+	public Socket fileStreamSocket;
 	
 	/**
 	 * Receive file stream.
@@ -85,9 +89,9 @@ public class FileReceiverController {
             protected Object doInBackground() throws Exception {
             	progressBar.setVisible(true);
             	
-            	DatagramSocket commandSocket = null;
-        		ServerSocket fileStreamListener = null;
-        		Socket fileStreamSocket = null;
+            	commandSocket = null;
+        		fileStreamListener = null;
+        		fileStreamSocket = null;
         		DataInputStream fileInputStream = null;
         		DataOutputStream fileOutputStream = null;
         		
@@ -230,6 +234,23 @@ public class FileReceiverController {
             }
         });
         worker.execute();
+	}
+	
+	
+	public void close() {
+		try {
+			if ( commandSocket != null ) {
+				commandSocket.close();
+			}
+			if ( fileStreamSocket != null ) {
+				fileStreamSocket.close();
+			}
+			if ( fileStreamListener != null ) {
+				fileStreamListener.close();
+			}
+		} catch ( IOException e ) {
+			LOGGER.catching(e);
+		}
 	}
 	
 	public double calculateProgress(double volume, double overrall) {

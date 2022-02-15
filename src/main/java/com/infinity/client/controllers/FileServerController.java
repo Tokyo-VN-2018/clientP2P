@@ -10,7 +10,6 @@ import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -59,11 +58,11 @@ public class FileServerController {
 	public static void setCOMMAND_PORT(int cOMMAND_PORT) {
 		COMMAND_PORT = cOMMAND_PORT;
 	}
-
+	
 	/**
 	 * The buffer size of the file stream.
 	 */
-	private static final int BUFFER_SIZE = 4096;
+	private static final int BUFFER_SIZE = 49152;
 
 	/**
 	 * The unique instance of client.
@@ -165,7 +164,16 @@ public class FileServerController {
 	 */
 	public void close() {
 		closeSocket(commandSocket);
+		try {
+			if ( socket != null ) {
+				socket.close();
+			}
+		} catch ( IOException ex ) {
+			LOGGER.catching(ex);
+		}
 	}
+	
+	public Socket socket;
 	
 	/**
 	 * Send file stream to the receiver.
@@ -176,7 +184,7 @@ public class FileServerController {
 	private void sendFileStream(String hash, String ipAddress, int REQUESTER_PORT) {
 		SharedFileModel fileToSend = sharedFiles.get(hash);
 		String filePath = fileToSend.getFilePath();
-		Socket socket = null;
+		socket = null;
 		DataInputStream fileInputStream = null;
 		DataOutputStream fileOutputStream = null;
 
@@ -255,7 +263,7 @@ public class FileServerController {
 	public static List<SharedFileModel> getFilesInSharedFolder(String sharedFolderName) {
 		List<SharedFileModel> listOfFile = new ArrayList<SharedFileModel>();
 		
-		File dirPath = new File(System.getProperty("user.dir") + File.separator + sharedFolderName);
+		File dirPath = new File(sharedFolderName);
 		List<File> files = (List<File>) FileUtils.listFiles(dirPath, null, true);
         for (File file : files) {
 			try {
