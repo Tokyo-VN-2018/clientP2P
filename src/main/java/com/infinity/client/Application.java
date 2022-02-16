@@ -27,6 +27,8 @@ import javax.swing.JTable;
 import java.awt.Color;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+import javax.swing.table.TableModel;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,7 +37,6 @@ import com.infinity.client.controllers.ClientController;
 import com.infinity.client.controllers.FileReceiverController;
 import com.infinity.client.controllers.FileServerController;
 import com.infinity.client.models.ReceivedFileModel;
-import com.infinity.client.models.SharedFileModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.JProgressBar;
 
@@ -236,6 +237,7 @@ public class Application {
 		table.getColumnModel().getColumn(0).setResizable(false);
 		table.getColumnModel().getColumn(1).setResizable(false);
 		table.getColumnModel().getColumn(2).setResizable(false);
+//		table.setAutoCreateRowSorter(true);
 		scrollPane.setViewportView(table);
 
 		JTableHeader tableHeader = table.getTableHeader();
@@ -274,11 +276,7 @@ public class Application {
 		usernameInput.setText("Anonymous");
 		commandPortInput.setText("7701");
 		streamPortInput.setText("7702");
-//		sharedFolderInput.setText("sharedFolder");
-		
-		// Initialize UI
-		setupUiComponentAvailability(serverIPInput, usernameInput, commandPortInput, streamPortInput, sharedFolderInput,
-				btnConnect, btnMyFiles, btnSearch, btnDownload, table, isConnected);
+//		sharedFolderInput.setText("D:\\Code\\eclipse_workspace_2\\clientP2P\\sharedFolder");
 		
 		JProgressBar progressBar = new JProgressBar(0, 100);
 		progressBar.setValue(0);
@@ -302,6 +300,10 @@ public class Application {
 		btnChooseFolder.setBounds(643, 106, 32, 24);
 		frmFileSharingSystem.getContentPane().add(btnChooseFolder);
 		progressBar.setVisible(false);
+		
+		// Initialize UI
+		setupUiComponentAvailability(serverIPInput, usernameInput, commandPortInput, streamPortInput, sharedFolderInput,
+						btnConnect, btnMyFiles, btnSearch, btnDownload, table, isConnected, btnChooseFolder);
 		
 		btnConnect.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -375,7 +377,7 @@ public class Application {
 					searchInput.setText("");
 				}
 				setupUiComponentAvailability(serverIPInput, usernameInput, commandPortInput, streamPortInput,
-						sharedFolderInput, btnConnect, btnMyFiles, btnSearch, btnDownload, table, isConnected);
+						sharedFolderInput, btnConnect, btnMyFiles, btnSearch, btnDownload, table, isConnected, btnChooseFolder);
 
 				btnConnect.setEnabled(true);
 
@@ -395,13 +397,36 @@ public class Application {
 					List<ReceivedFileModel> searchResults = clientController.searchFiles(searchText);
 					results.addAll(searchResults);
 
-					if (results.size() > 10) {
-						results.subList(10, results.size()).clear();
-					} else if (results.size() == 0) {
+//					if (results.size() > 10) {
+//						results.subList(10, results.size()).clear();
+//					} else if (results.size() == 0) {
+//						JOptionPane.showMessageDialog(null, "File not found !!!");
+//					}
+					
+					if (results.size() == 0) {
 						JOptionPane.showMessageDialog(null, "File not found !!!");
 					}
 
 					int count = 0;
+//					for (ReceivedFileModel file : results) {
+//						table.getModel().setValueAt(file.getFileName(), count, 0);
+//						table.getModel().setValueAt(file.getSharer(), count, 1);
+////						table.getModel().setValueAt(file.getSize(), count, 2);
+//						table.getModel().setValueAt(Application.humanReadableByteCountBin(file.getSize()), count, 2);
+//						count++;
+//					}
+					
+					
+					String[] columnNames = { "File Name", "Checksum", "Size" };
+					
+					int numOfRows = results.size();
+					if (numOfRows < 10) {
+						numOfRows = 10;
+					}
+					TableModel myData = new DefaultTableModel(new String[numOfRows][3], columnNames);
+					
+					table.setModel(myData);
+					
 					for (ReceivedFileModel file : results) {
 						table.getModel().setValueAt(file.getFileName(), count, 0);
 						table.getModel().setValueAt(file.getSharer(), count, 1);
@@ -522,7 +547,7 @@ public class Application {
 	private void setupUiComponentAvailability(JTextField serverIpTextField, JTextField usernameTextField,
 			JTextField commandPortTextField, JTextField streamPortTextField, JTextField sharedFolderTextField,
 			JButton connectServerButton, JButton myFilesButton, JButton searchButton, JButton downloadButton,
-			JTable table, boolean isConnected) {
+			JTable table, boolean isConnected, JButton btnChooseFolder) {
 		if (isConnected) {
 			serverIpTextField.setEditable(false);
 			usernameTextField.setEditable(false);
@@ -532,6 +557,7 @@ public class Application {
 			connectServerButton.setText("Disconnect");
 			myFilesButton.setEnabled(true);
 			searchButton.setEnabled(true);
+			btnChooseFolder.setEnabled(false);
 
 		} else {
 			serverIpTextField.setEditable(true);
@@ -544,6 +570,7 @@ public class Application {
 			searchButton.setEnabled(false);
 			downloadButton.setEnabled(false);
 			clearDataTable(table);
+			btnChooseFolder.setEnabled(true);
 		}
 	}
 
