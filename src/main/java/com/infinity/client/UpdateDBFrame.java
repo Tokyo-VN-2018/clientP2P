@@ -222,7 +222,9 @@ public class UpdateDBFrame extends JFrame {
 		if (numOfRows < 10) {
 			numOfRows = 10;
 		}
-		TableModel myData = new DefaultTableModel(new String[numOfRows][3], columnNames);
+//		System.out.println(numOfRows);
+		TableModel myData = new DefaultTableModel(new Object[numOfRows+1][3], columnNames);
+//		System.out.println(myData.getRowCount());
 		
 		table.setModel(myData);
 		

@@ -240,6 +240,10 @@ public class FileServerController {
 		sharedFiles.put(getMd5(file), file);
 	}
 	
+	public static void clearOldData() {
+		sharedFiles.clear();
+	}
+	
 	/**
 	 * Remove a shared file from the file server because it is no longer shared.
 	 * @param checksum the checksum of the file

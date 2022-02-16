@@ -90,6 +90,8 @@ public class ClientController {
         connectMess.setUsername(username);
         connectMess.setCommandPort(commandPort);
         
+        FileServerController.clearOldData();
+        
         List<SharedFileModel> currentFilesInSharedFolder = FileServerController.getFilesInSharedFolder(sharedFolderName);
         for (SharedFileModel element : currentFilesInSharedFolder) {
         	// Create request message
